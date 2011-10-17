@@ -7,7 +7,7 @@
 	<?php foreach ($users as $user):?>
 	<url>
 		<loc><?php echo Router::url(array('plugin'=>'users','controller'=>'users','action'=>'view','id'=>$user['User']['id']),true); ?></loc>
-		<lastmod><?php echo $time->toAtom($user['User']['last_login']); ?></lastmod>
+		<lastmod><?php echo $this->Time->toAtom($user['User']['last_login']); ?></lastmod>
 		<priority>0.8</priority>
 	</url>
 	<?php endforeach; ?>
