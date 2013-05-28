@@ -25,7 +25,7 @@ class FeedsAppController extends AppController {
 			'conditions' => $conditions,
 		));
 		
-		//debug($results);
+		
 		$this->set('products', $results['FeedCJ']['products']['product']);
 		$this->set('pageNumber', $results['FeedCJ']['products']['@page-number']);
 		$this->set('recPerPage', $results['FeedCJ']['products']['@records-returned']);
