@@ -4,6 +4,10 @@ class FeedCJ extends FeedsAppModel {
 	
 	public $useDbConfig = 'commissionjunction';
 	
+	public $name = 'FeedCJ';
+	
+	public $useTable = false;
+	
 	/*
 	 * Property for Advertiser id lookup
 	 * Limits the results to a set of particular advertisers (CIDs) using one of the following four values.
@@ -34,5 +38,21 @@ class FeedCJ extends FeedsAppModel {
 		$query['advertiser-ids'] = $this->advertiserParam;
 		$type = $this->_metaType($type, $query);
 		return parent::find($type, $query);
+	}
+	
+	//This Overirides the exists function to search by sku
+	public function exists($id = null) {
+		if ($id === null) {
+			$id = $this->getID();
+		}
+		if ($id === false) {
+			return false;
+		}
+		$conditions = array('advertiser-sku' => $id);
+		$query = array(
+			'keywords' => $this->defaultKeywords,
+			'conditions' => $conditions);
+		$results = $this->find('all', $query);
+		return (isset($results['FeedCJ']['products']['product']) && count($results['FeedCJ']['products']['product']) > 0);
 	}
 }

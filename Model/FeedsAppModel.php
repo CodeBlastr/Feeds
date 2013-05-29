@@ -9,7 +9,6 @@ class FeedsAppModel extends AppModel {
  	* Constructor
  	*/
 	public function __construct($id = false, $table = null, $ds = null) {
-		parent::__construct($id, $table, $ds);
 		
 		//Adds Rateable Behavior.
 		if (in_array('Ratings', CakePlugin::loaded())) {
@@ -18,10 +17,10 @@ class FeedsAppModel extends AppModel {
 		
 		//Adds Favorable Behavior
 		if (in_array('Favorites', CakePlugin::loaded())) {
-			$this->actsAs['Favorites.Favorite'] = array(
-				'Feed' => array('limit' => null, 'model' => 'Feed'),
-			);
+			$this->actsAs[] = 'Favorites.Favorite';
 		}
+		
+		parent::__construct($id, $table, $ds);
 		
 		
 	}

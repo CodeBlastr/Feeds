@@ -9,6 +9,8 @@ class FeedCJsController extends FeedsController {
 	
 	public $defaultKeywords = '+Clothing/Apparel';
 	
+	
+	
 	public function index ($keywords = 'all') {
 		if(!empty($this->request['named'])) {
 			$advertiserName = isset($this->request['named']['name']) ? $this->request['named']['name'] : null;
@@ -38,8 +40,7 @@ class FeedCJsController extends FeedsController {
 	}
 	
 	public function advertisers ($keywords = array()) {
-		debug($this->request);
-		debug($keywords);
+		
 		if(!empty($this->request['named'])) {
 			$advertiserName = $this->request['named']['name'];
 		}
@@ -59,6 +60,19 @@ class FeedCJsController extends FeedsController {
 		//Adds Favorable Helpers
 		if (in_array('Favorites', CakePlugin::loaded())) {
 			$this->helpers[] = 'Favorites.Favorites';
+			$this->uses[] = 'Favorites.Favorite';
 		}
+	}
+	
+	public function beforeRender() {
+		parent::beforeRender();
+		
+		//Adds User Favorites to Views
+		if (in_array('Favorites', CakePlugin::loaded())) {
+			$userId = $this->Session->read('Auth.User.id');
+			debug($this->Favorite->getAllFavorites($userId));
+			$this->set('userFavorites', $this->Favorite->getAllFavorites($userId));
+		}
+		
 	}
 }
