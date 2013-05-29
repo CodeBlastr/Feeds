@@ -19,7 +19,7 @@ class FeedsAppModel extends AppModel {
 		//Adds Favorable Behavior
 		if (in_array('Favorites', CakePlugin::loaded())) {
 			$this->actsAs['Favorites.Favorite'] = array(
-				'productFeed' => array('limit' => null, 'model' => 'FeedCJ'),
+				'Feed' => array('limit' => null, 'model' => 'Feed'),
 			);
 		}
 		
