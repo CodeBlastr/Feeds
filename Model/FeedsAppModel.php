@@ -4,6 +4,34 @@ class FeedsAppModel extends AppModel {
 	
 	public $useTable = false;
 	
+	
+	/**
+ 	* Constructor
+ 	*/
+	public function __construct($id = false, $table = null, $ds = null) {
+		parent::__construct($id, $table, $ds);
+		
+		//Adds Rateable Behavior.
+		if (in_array('Ratings', CakePlugin::loaded())) {
+			$this->actsAs[] = 'Ratings.Ratable';
+		}
+		
+		//Adds Favorable Behavior
+		if (in_array('Favorites', CakePlugin::loaded())) {
+			$this->actsAs['Favorites.Favorite'] = array(
+				'productFeed' => array('limit' => null, 'model' => 'FeedCJ'),
+			);
+		}
+		
+		
+	}
+	
+	/**
+	 * Find Method Find From Feed Datasource.
+	 * 
+	 * @param $query - See model
+	 */
+	
 	public function find($type = 'all', $query = array()) {
 		$this->findQueryType = $type;
 		$this->id = $this->getID();
