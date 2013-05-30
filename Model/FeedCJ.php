@@ -35,9 +35,16 @@ class FeedCJ extends FeedsAppModel {
 	 * Overriding the find method, so we can add our custom query params
 	 */
 	public function find($type = 'first', $query = array()) {
-		$query['advertiser-ids'] = $this->advertiserParam;
+		if(!isset($query['advertiser-ids'])) {
+			$query['advertiser-ids'] = $this->advertiserParam;
+		}
 		$type = $this->_metaType($type, $query);
-		return parent::find($type, $query);
+		$results = parent::find($type, $query);
+		foreach ($results['FeedCJ']['products']['product'] as $key => $product) {
+			$product['id'] = $this->_createIds($product);
+			$results['FeedCJ']['products']['product'][$key] = $product;
+		}
+		return $results; 
 	}
 	
 	//This Overirides the exists function to search by sku
@@ -48,11 +55,24 @@ class FeedCJ extends FeedsAppModel {
 		if ($id === false) {
 			return false;
 		}
-		$conditions = array('advertiser-sku' => $id);
+		$id = $this->_explodeIds($id);
+		$conditions['advertiser-ids'] = $id[0];
+		$conditions['sku'] = $id[1];
+		$conditions['keywords'] = $this->defaultKeywords;
 		$query = array(
-			'keywords' => $this->defaultKeywords,
 			'conditions' => $conditions);
 		$results = $this->find('all', $query);
 		return (isset($results['FeedCJ']['products']['product']) && count($results['FeedCJ']['products']['product']) > 0);
+	}
+	
+	private function _createIds ($product) {
+		return implode("__", array(
+				$product['advertiser-id'],
+				$product['sku'],
+				));
+	}
+
+	private function _explodeIds ($id) {
+		return explode("__", $id);
 	}
 }

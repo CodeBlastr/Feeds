@@ -33,6 +33,6 @@
 	</div>
 	<div class="row-fluid pull-right">
 		<div class="pull-right" style="margin:10px 0;">
-		<?php echo $this->Favorites->toggleFavorite('closet', $product['sku'], 'Save to Closet', 'Remove From Closet', array('class' => 'btn'), $userFavorites); ?>
+		<?php echo $this->Favorites->toggleFavorite('closet', $product['id'], 'Save to Closet', 'Remove From Closet', array('class' => 'btn'), $userFavorites); ?>
 		</div>
 	</div>
