@@ -1,6 +1,10 @@
 <?php
 App::uses('FeedsController', 'Feeds.Controller');
 
+/**
+ * See for params http://help.cj.com/en/web_services/product_catalog_search_service_rest.htm
+ */
+
 class FeedCJsController extends FeedsController {
 		
 	public $uses = array('Feeds.FeedCJ');
@@ -10,25 +14,18 @@ class FeedCJsController extends FeedsController {
 	public $defaultKeywords = '+Clothing/Apparel';
 	
 	
+	public function index () {
 	
-	public function index ($keywords = 'all') {
-		if(!empty($this->request['named'])) {
-			$advertiserName = isset($this->request['named']['name']) ? $this->request['named']['name'] : null;
-			$pageNumber = isset($this->request['named']['page']) ? $this->request['named']['page'] : 1;
-			$recordPerPage = isset($this->request['named']['rec']) ? $this->request['named']['rec'] : 50;
-		}
-		//conditions
-		$conditions = array(
-			'page-number' => $pageNumber,
-			'records-per-page' => $recordPerPage,
-		);
+		$conditions = array();
 		
-		if($advertiserName !== null){
-			$conditions['manufacturer-name'] = $advertiserName;
+		if(!empty($this->request['named'])) {
+			$conditions = $this->request['named'];
 		}
+		
+		//Add default Keywords
+		$conditions['keywords'] = $this->defaultKeywords . ';' . $conditions['keywords'];
 		
 		$results = $this->FeedCJ->find('all', array(
-			'keywords' => $this->defaultKeywords . $keywords,
 			'conditions' => $conditions,
 		));
 		
@@ -37,6 +34,23 @@ class FeedCJsController extends FeedsController {
 		$this->set('recPerPage', $results['FeedCJ']['products']['@records-returned']);
 		$this->set('totalMatches', $results['FeedCJ']['products']['@total-matched']);
 		
+	}
+
+	public function view() {
+		
+		if(!empty($this->request['named'])) {
+			$conditions = $this->request['named'];
+		}
+		
+		//Set Defaults
+		$conditions['page-number'] = 1;
+		$condtions['record-per-page'] = 1;
+		
+		$results = $this->FeedCJ->find('all', array(
+			'conditions' => $conditions,
+		));
+		
+		$this->set('product', $results['FeedCJ']['products']['product']);
 	}
 	
 	public function advertisers ($keywords = array()) {
@@ -50,7 +64,6 @@ class FeedCJsController extends FeedsController {
 	}
 	
 	public function __construct($request = null, $response = null) {
-		parent::__construct($request, $response);
 	
 		//Adds Rateable Helpers.
 		if (in_array('Ratings', CakePlugin::loaded())) {
@@ -62,6 +75,8 @@ class FeedCJsController extends FeedsController {
 			$this->helpers[] = 'Favorites.Favorites';
 			$this->uses[] = 'Favorites.Favorite';
 		}
+		
+		parent::__construct($request, $response);
 	}
 	
 	public function beforeRender() {
@@ -70,9 +85,9 @@ class FeedCJsController extends FeedsController {
 		//Adds User Favorites to Views
 		if (in_array('Favorites', CakePlugin::loaded())) {
 			$userId = $this->Session->read('Auth.User.id');
-			debug($this->Favorite->getAllFavorites($userId));
 			$this->set('userFavorites', $this->Favorite->getAllFavorites($userId));
 		}
 		
 	}
 }
+

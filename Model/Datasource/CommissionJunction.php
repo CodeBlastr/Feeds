@@ -204,12 +204,7 @@ class CommissionJunction extends DataSource {
 		if(!empty($queryData['conditions'])) {
 			$query = $queryData['conditions'];
 		}
-		if(!empty($queryData['advertiser-ids'])) {
-			$query['advertiser-ids'] = $queryData['advertiser-ids'];
-		}
-		if(isset($queryData['keywords'])) {
-			$query['keywords'] = $queryData['keywords'];
-		}
+		
 		if(isset($this->config['website-id'])) {
 			$query['website-id'] = $this->config['website-id'];
 		}
