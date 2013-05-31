@@ -94,6 +94,7 @@ class FeedCJ extends FeedsAppModel {
 		$query = array(
 			'conditions' => $conditions);
 		$results = $this->find('all', $query);
+		
 		return (isset($results['FeedCJ']['products']['product']) && count($results['FeedCJ']['products']['product']) > 0);
 	}
 	
