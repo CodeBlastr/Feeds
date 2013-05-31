@@ -11,8 +11,6 @@ class FeedCJsController extends FeedsController {
 	
 	public $viewPath = 'Feeds';
 	
-	public $defaultKeywords = '+Clothing/Apparel';
-	
 	
 	public function index () {
 	
@@ -36,17 +34,15 @@ class FeedCJsController extends FeedsController {
 		
 	}
 
-	public function view() {
+	public function view($id = null) {
 		
-		if(!empty($this->request['named'])) {
-			$conditions = $this->request['named'];
+		if($id == null) {
+			throw new NotFoundException('Could not find that product');
+		}else {
+			$this->FeedCJ->id = $id;
 		}
 		
-		//Set Defaults
-		$conditions['page-number'] = 1;
-		$condtions['record-per-page'] = 1;
-		
-		$results = $this->FeedCJ->find('all', array(
+		$results = $this->FeedCJ->find('first', array(
 			'conditions' => $conditions,
 		));
 		
