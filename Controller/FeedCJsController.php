@@ -42,9 +42,7 @@ class FeedCJsController extends FeedsController {
 			$this->FeedCJ->id = $id;
 		}
 		
-		$results = $this->FeedCJ->find('first', array(
-			'conditions' => $conditions,
-		));
+		$results = $this->FeedCJ->find('first');
 		
 		$this->set('product', $results['FeedCJ']['products']['product']);
 	}
@@ -58,6 +56,18 @@ class FeedCJsController extends FeedsController {
 		$this->set('advertisers', $advertisers);
 		
 	}
+	
+	
+	public function retrieveItems ($type) {
+		$favorites = $this->Favorite->getFavorites($this->Auth->user('id'), array('type' => $type));
+		foreach ( $favorites as $favorite ) {
+			$this->FeedCJ->id = $favorite['Favorite']['foreign_key'];
+			$results = $this->FeedCJ->find('first');
+			$items[] = $results['FeedCJ']['products']['product'];
+		}
+		return $items;
+	}
+	
 	
 	public function __construct($request = null, $response = null) {
 	
