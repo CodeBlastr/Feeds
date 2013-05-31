@@ -57,9 +57,46 @@ class FeedCJsController extends FeedsController {
 		
 	}
 	
+
+	public function rate ($id) {
+
+		if ($id == null) {
+			throw new NotFoundException('Please provide and id');
+		}
+		
+		if (!in_array('Ratings', CakePlugin::loaded())) {
+			throw new MethodNotAllowedException('Please Install Ratings Plugin');
+		}
+		
+		if(!isset($this->request->data['Rating'])) {
+			throw new NotFoundException('Item Not Found');
+		}
+		
+		$this->FeedCJ->id = $id;
+		$product = $this->FeedCJ->find('first');
+		
+		$product = $product['FeedCJ']['products']['product'];
+		if(!empty($product)) {
+			if(empty($product['manufacturer-name']) || empty($product['manufacturer-sku'])) {
+				throw new MethodNotAllowedException('Unable to Rate this item');
+			}	
+			$this->request->data['Rating']['foreign_key'] = implode('__', array($product['manufacturer-name'], $product['manufacturer-sku']));
+			$this->request->data['Rating']['data'] = serialize($product);
+			$this->Rating->create();
+			debug($this->Rating->save($this->request->data));
+		}
+		debug($product);
+		debug($this->request);
+		break;
+
+		
+		
+	}
 	
+
 	public function retrieveItems ($type, $userId) {
 		$favorites = $this->Favorite->getFavorites($userId, array('type' => $type));
+
 		foreach ( $favorites as $favorite ) {
 			$this->FeedCJ->id = $favorite['Favorite']['foreign_key'];
 			$results = $this->FeedCJ->find('first');
@@ -74,6 +111,7 @@ class FeedCJsController extends FeedsController {
 		//Adds Rateable Helpers.
 		if (in_array('Ratings', CakePlugin::loaded())) {
 			$this->helpers[] = 'Ratings.Rating';
+			$this->uses[] = 'Ratings.Rating';
 		}
 		
 		//Adds Favorable Helpers
