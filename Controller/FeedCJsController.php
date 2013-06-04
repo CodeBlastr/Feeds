@@ -133,8 +133,9 @@ class FeedCJsController extends FeedsController {
 	}
 	
 
-	public function retrieveItems ($type) {
-		$favorites = $this->Favorite->getFavorites($this->Auth->user('id'), array('type' => $type));
+	public function retrieveItems ($type, $userId) {
+		$favorites = $this->Favorite->getFavorites($userId, array('type' => $type));
+
 		foreach ( $favorites as $favorite ) {
 			$this->FeedCJ->id = $favorite['Favorite']['foreign_key'];
 			$results = $this->FeedCJ->find('first');
