@@ -57,38 +57,77 @@ class FeedCJsController extends FeedsController {
 		
 	}
 	
+	/**
+	 * Saves Rating for Feed item.
+	 * Will Return not found if not handed and Rating.
+	 * 
+	 * @param $id string of created feed id. See $model->createIds()
+	 */
 
 	public function rate ($id) {
-
-		if ($id == null) {
-			throw new NotFoundException('Please provide and id');
+		try{
+			if ($id == null) {
+				throw new NotFoundException('Please provide and id');
+			}
+			
+			if (!in_array('Ratings', CakePlugin::loaded())) {
+				throw new MethodNotAllowedException('Please Install Ratings Plugin');
+			}
+			
+			if(!isset($this->request->data['Rating'])) {
+				$this->Session->setFlash('Need to provide a rating');
+				$this->redirect($this->referer());
+			}
+			//rate(Model $Model, $foreignKey = null, $userId = null, $rating = null, $options = array(), $parent_id = null)
+			$this->FeedCJ->id = $id;
+			$product = $this->FeedCJ->find('first');
+			$product = $product['FeedCJ']['products']['product'];
+			if(!empty($product['manufacturer-name']) && !empty($product['manufacturer-sku'])) {
+				$foreignKey = implode('__', array($product['manufacturer-name'], $product['manufacturer-sku']));
+				$userId = $this->Session->read('Auth.User.id');
+				$rating = $this->request->data['Rating']['value'];
+				$options = array();
+				$parent = array();
+				//Build the Parent Element
+				$parent['user_id'] = $userId;
+				$parent['foreign_key'] = $foreignKey;
+				$parent['model'] = 'FeedCJ';
+				$parent['value'] = $rating;
+				$parent['title'] = $this->request->data['Rating']['title'];
+				$parent['review'] = $this->request->data['Rating']['review'];
+				$parent['data'] = serialize($product);
+				$parent['parent_id'] = null;
+				
+				$options['records']['Rating'][] = $parent;
+				//Save the Parent Rating
+				if(!empty($this->request->data['Rating']['SubRating'])) {
+					foreach($this->request->data['Rating']['SubRating'] as $k => $subRating) {
+						$child = array();
+						$child['user_id'] = $parent['user_id'];
+						$child['foreign_key'] = $parent['foreign_key'];
+						$child['model'] = $parent['model'];
+						$child['value'] = $subRating;
+						$child['type'] = $k;
+						$options['records']['SubRatings'][] = $child;
+					}
+				}
+				if($this->FeedCJ->rate($foreignKey, $userId, $rating, $options)) {
+					$this->Session->setFlash('Thank you for your input');
+					$this->redirect($this->referer());
+				}else {
+					throw new CakeException('Unable to save rating');
+				}
+				
+				
+				
+			}else {
+				throw new OutOfBoundsException(__d('ratings', 'Can only Rate Items with valid Manufacturer Name and SKU'));
+			}
 		}
-		
-		if (!in_array('Ratings', CakePlugin::loaded())) {
-			throw new MethodNotAllowedException('Please Install Ratings Plugin');
+		catch (Exception $e) {
+			$this->Session->setFlash('Error: ' . $e->getMessage());
+			$this->redirect($this->referer());
 		}
-		
-		if(!isset($this->request->data['Rating'])) {
-			throw new NotFoundException('Item Not Found');
-		}
-		
-		$this->FeedCJ->id = $id;
-		$product = $this->FeedCJ->find('first');
-		
-		$product = $product['FeedCJ']['products']['product'];
-		if(!empty($product)) {
-			if(empty($product['manufacturer-name']) || empty($product['manufacturer-sku'])) {
-				throw new MethodNotAllowedException('Unable to Rate this item');
-			}	
-			$this->request->data['Rating']['foreign_key'] = implode('__', array($product['manufacturer-name'], $product['manufacturer-sku']));
-			$this->request->data['Rating']['data'] = serialize($product);
-			$this->Rating->create();
-			debug($this->Rating->save($this->request->data));
-		}
-		debug($product);
-		debug($this->request);
-		break;
-
 		
 		
 	}
