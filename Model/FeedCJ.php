@@ -49,7 +49,9 @@ class FeedCJ extends FeedsAppModel {
 		}
 		
 		if(!isset($query['conditions']['keywords'])) {
-			$query['conditions']['keywords'] = $this->defaultKeywords;
+			if(!isset($query['conditions']['advertiser-ids'])) {
+				$query['conditions']['keywords'] = $this->defaultKeywords;	
+			}
 		}else {
 			$query['conditions']['keywords'] = $this->defaultKeywords . $query['conditions']['keywords'];
 		}
@@ -67,11 +69,24 @@ class FeedCJ extends FeedsAppModel {
 		//Set Search to Always All so it is mapped properly in datasource
 		$typesearch = $this->_metaType('all', $query);
 		$results = parent::find($typesearch, $query);
+		//Checks the array for error messages
+		
+		//Checks for errors
+		if(isset($results['FeedCJ']['error-message'])) {
+		
+			throw new BadRequestException($results['FeedCJ']['error-message'], 1);
+			
+		}
+		
+		//Returns empty array if nothing is found
+		if(!isset($results['FeedCJ']['products']['product'])) {
+			$results['FeedCJ']['products']['product'] = array();
+		}
 		
 		//Creates Ids that we can search by
 		if($type == 'first') {
 			$results['FeedCJ']['products']['product']['id'] = $this->_createIds($results['FeedCJ']['products']['product']);
-		}else {
+		}else {	
 			foreach ($results['FeedCJ']['products']['product'] as $key => $product) {
 				$product['id'] = $this->_createIds($product);
 				$results['FeedCJ']['products']['product'][$key] = $product;
@@ -81,6 +96,49 @@ class FeedCJ extends FeedsAppModel {
 		return $results; 
 	}
 	
+	
+	public function afterFind($results, $primary = false) {
+		if ( !empty($results) ) {
+
+			if ( $results['FeedCJ']['products']['@records-returned'] == '1' ) {
+				$results['FeedCJ']['products']['product'] = $this->detectClothingType($results['FeedCJ']['products']['product']);
+			} elseif ( (int)$results['FeedCJ']['products']['@records-returned'] > 1  ) {
+				foreach ( $results['FeedCJ']['products']['product'] as &$result ) {
+					//debug($result);
+					$result = $this->detectClothingType($result);
+				}
+			}
+			
+		}
+		return $results;
+	}
+	
+	
+	public function detectClothingType($result) {
+		if ( !empty($result['name']) ) {
+			$tops = array('shirt', 'blouse', 'coat', 'jacket', 'sweater');
+			$bottoms = array('jeans', 'pants');
+
+			$result['type'] = 'unknown';
+			
+			foreach ( $tops as $top ) {
+				if ( stripos($result['name'], $top) !== false || stripos($result['description'], $top) !== false ) {
+					$result['type'] = 'top';
+				}
+			}
+
+			foreach ( $bottoms as $bottom ) {
+				if ( stripos($result['name'], $bottom) !== false || stripos($result['description'], $bottom) !== false ) {
+					$result['type'] = 'bottom';
+				}
+			}
+		}
+		
+		return $result;
+	}
+
+
+
 	//This Overirides the exists function to search by sku
 	public function exists($id = null) {
 		if ($id === null) {
@@ -111,6 +169,7 @@ class FeedCJ extends FeedsAppModel {
 				$product['sku'],
 				$product['manufacturer-name'],
 				$product['manufacturer-sku'],
+				$product['upc'],
 		));
 	}
 	
@@ -126,6 +185,7 @@ class FeedCJ extends FeedsAppModel {
 		$product['advertiser-sku'] = isset($id[1]) ? $id[1] : 0;
 		$product['manufacturer-name'] = isset($id[2]) ? $id[2] : 0;
 		$product['manufacturer-sku'] = isset($id[3]) ? $id[3] : 0;
+		$product['upc'] = isset($id[4]) ? $id[4] : 0;
 		
 		foreach($product as $k => $v) {
 			if(empty($v)) {
