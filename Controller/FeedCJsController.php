@@ -10,19 +10,65 @@ class FeedCJsController extends FeedsController {
 	public $uses = array('Feeds.FeedCJ');
 	
 	public $viewPath = 'Feeds';
+    
+    //Array of search categories
+    // $value => 'Dispaly Name'
+    public $categories = array(
+        "Mens Men's" => "Men's",
+        "Womens Women's" => "Women's",
+    );
 	
 	
 	public function index () {
+		//Defaults    
 		try{
 			$conditions = array();
 			
 			if(!empty($this->request['named'])) {
 				$conditions = $this->request['named'];
 			}
-			
-			//Add default Keywords
-			$conditions['keywords'] = $this->defaultKeywords . ';' . $conditions['keywords'];
-			
+            
+            //Create a fake $condtions array for extract
+            $condExtract = $conditions;
+            //Clean up the array, so values can be extracted
+            foreach($condExtract as $k => $v) {
+                $k = str_replace('-', '_', $k);
+                unset($condExtract[$k]);
+                $condExtract[$k] = $v;
+            }
+            
+            //Create Variables for all passed $conditions
+            extract($condExtract);
+            
+            //Create Defaults
+            $keywords = isset($keywords) ? $keywords : '';
+            $category = isset($category) ? $category : '';
+            $records_per_page = isset($records_per_page) ? $records_per_page : 50;
+            
+            //This is how CJ feed handles category
+            if (isset($conditions['category'])) {
+                unset($conditions['category']);
+            }
+            
+            // fix the conditions array for commission juction
+            // @todo - this would be better to be params in the app controller, and the params
+            // Handled by each feed controller. Right now its not scalable
+            if(!empty($keywords)) {
+                $keyworksarr = explode(' ', $keywords);
+                foreach($keyworksarr as $k => $keyword) {
+                    if(strpos($keyword, '+') === FALSE) {
+                        $keyword = '+'.$keyword;
+                    }
+                    $keyworksarr[$k] = $keyword;
+                }
+                $conditions['keywords'] = implode(' ', $keyworksarr);
+            }else {
+                $conditions['keywords'] = $keywords;
+            }
+            
+            $conditions['keywords'] = $conditions['keywords'].' +' . $category. ' ' .$this->defaultKeywords;
+            $conditions['records-per-page'] = $records_per_page;
+            
 			$results = $this->FeedCJ->find('all', array(
 				'conditions' => $conditions,
 			));
@@ -40,6 +86,11 @@ class FeedCJsController extends FeedsController {
 		}catch(Exception $e) {
 			$this->Session->setFlash($e);
 		}
+        
+        $this->set('categories', $this->categories);
+        $this->set('keywords', str_replace('+', '', $keywords));
+        $this->set('category', $category);
+        $this->set('records_per_page', $records_per_page);
 		$this->set('products', $products);
 		$this->set('pageNumber', $results['FeedCJ']['products']['@page-number']);
 		$this->set('recPerPage', $results['FeedCJ']['products']['@records-returned']);
