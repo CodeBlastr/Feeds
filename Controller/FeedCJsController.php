@@ -5,7 +5,7 @@ App::uses('FeedsController', 'Feeds.Controller');
  * See for params http://help.cj.com/en/web_services/product_catalog_search_service_rest.htm
  */
 
-class FeedCJsController extends FeedsController {
+class _FeedCJsController extends FeedsController {
 		
 	public $uses = array('Feeds.FeedCJ');
 	
@@ -342,5 +342,9 @@ class FeedCJsController extends FeedsController {
 		
 		return $ratings;
 	}
+}
+
+if (!isset($refuseInit)) {
+    class FeedCJsController extends _FeedCJsController {}
 }
 
