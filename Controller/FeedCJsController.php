@@ -128,7 +128,8 @@ class _FeedCJsController extends FeedsController {
 			}
 		};
 		/** end change scope **/
-		
+
+		$this->set('title_for_layout', $product['name'] . ' | ' . __SYSTEM_SITE_NAME);
 		$this->set('product', $product);
 	}
 	
