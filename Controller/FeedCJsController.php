@@ -168,7 +168,7 @@ class _FeedCJsController extends FeedsController {
 		if ( $this->request->isAjax() ) {
 			$this->layout = null;
 		}
-		
+        
 		$this->set('product', $product);
 		
 	}
@@ -257,6 +257,16 @@ class _FeedCJsController extends FeedsController {
 				if($this->request->isAjax()) {
 					$this->layout=null;
 				}
+                $ratingdisplay = unserialize(__RATINGS_RATINGS_SETTINGS);
+                $length = array();
+                $fitting = array();
+                foreach($ratingdisplay as $k => $r) {
+                    $v = explode('/', $r);
+                    $fitting[$k] = $v[0];
+                    $length[$k] = isset($v[1]) ? $v[1] : $v[0];
+                }
+                $this->set('length_fitting', $length);
+                $this->set('size_fitting', $fitting);
 				$this->set('product', $product['FeedCJ']['products']['product']);
 			}
 			catch (Exception $e) {
