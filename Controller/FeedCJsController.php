@@ -68,7 +68,7 @@ class _FeedCJsController extends FeedsController {
             
             $conditions['keywords'] = $conditions['keywords'].' +' . $category. ' ' .$this->defaultKeywords;
             $conditions['records-per-page'] = $records_per_page;
-            
+           
 			$results = $this->FeedCJ->find('all', array(
 				'conditions' => $conditions,
 			));
@@ -274,6 +274,17 @@ class _FeedCJsController extends FeedsController {
 			$results = $this->FeedCJ->find('first');
 			$items[] = $results['FeedCJ']['products']['product'];
 		}
+        
+        if (in_array('Ratings', CakePlugin::loaded()) && !empty($items)) {
+                foreach($items as $k => $item) {
+                    if(!empty($item['manufacturer-name']) && !empty($item['manufacturer-sku'])) {
+                        $id = implode('__', array($item['manufacturer-name'], $item['manufacturer-sku']));
+                        
+                        $items[$k]['ratings'] = $this->_getRating($id);
+                    }
+                }
+        }
+        
 		return $items;
 	}
 	
