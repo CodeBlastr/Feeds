@@ -116,22 +116,27 @@ class _FeedCJ extends FeedsAppModel {
 	
 	public function detectClothingType($result) {
 		if ( !empty($result['name']) ) {
-			$tops = array('shirt', 'blouse', 'coat', 'jacket', 'sweater');
-			$bottoms = array('jeans', 'pants');
+		    $types = array(
+                'tshirt' => array('t-shirt', 't shirt', 'tee', 'tees'),
+                'pants' => array('jeans', 'pants', 'slacks', 'trousers'),
+                'shirt' => array('shirt', 'long sleeve', 'sweatshirt'),
+                'dress' => array('dress'),
+                'shoes' => array('shoes', 'sneaker', 'sneakers', 'heels', 'boots', 'sandals', 'clogs'),
+                'coat' => array('coat', 'jacket', 'wind breaker')
+            );
+			
 
 			$result['type'] = 'unknown';
 			
-			foreach ( $tops as $top ) {
-				if ( stripos($result['name'], $top) !== false || stripos($result['description'], $top) !== false ) {
-					$result['type'] = 'top';
-				}
+			foreach ( $types as $type => $words ) {
+			    foreach($words as $word) {
+			        if ( stripos($result['name'], $word) !== false || stripos($result['description'], $word) !== false ) {
+                        $result['type'] = $type;
+                        return $result;
+                    }
+			    }	
 			}
-
-			foreach ( $bottoms as $bottom ) {
-				if ( stripos($result['name'], $bottom) !== false || stripos($result['description'], $bottom) !== false ) {
-					$result['type'] = 'bottom';
-				}
-			}
+            
 		}
 		
 		return $result;
