@@ -76,8 +76,8 @@ class _FeedCJsController extends FeedsController {
 			$products = $results['FeedCJ']['products']['product'];
 			if (in_array('Ratings', CakePlugin::loaded()) && !empty($products)) {
 				foreach($products as $k => $product) {
-					if(!empty($product['manufacturer-name']) && !empty($product['manufacturer-sku'])) {
-						$id = implode('__', array($product['manufacturer-name'], $product['manufacturer-sku']));
+					if(!empty($product['manufacturer-name']) && (!empty($product['manufacturer-sku']) || !empty($product['upc']))) {
+						$id = implode('__', array($product['manufacturer-name'], $product['manufacturer-sku'], $product['upc']));
 						
 						$products[$k]['ratings'] = $this->_getRating($id);
 					}
@@ -122,8 +122,8 @@ class _FeedCJsController extends FeedsController {
 		
 		// get the ratings of this item if possible
 		if (in_array('Ratings', CakePlugin::loaded()) && !empty($results)) {
-			if(!empty($product['manufacturer-name']) && !empty($product['manufacturer-sku'])) {
-				$id = implode('__', array($product['manufacturer-name'], $product['manufacturer-sku']));
+			if(!empty($product['manufacturer-name']) && (!empty($product['manufacturer-sku']) || !empty($product['upc']))) {
+				$id = implode('__', array($product['manufacturer-name'], $product['manufacturer-sku'], $product['upc']));
 				$product['ratings'] = $this->_getRating($id, $fromUsers);
 			}
 		};
@@ -133,46 +133,7 @@ class _FeedCJsController extends FeedsController {
 		$this->set('product', $product);
 	}
 	
-	/**
-	 * @todo Definitely should be in a custom Controller
-	 * 
-	 * @param type $productId
-	 */
-	public function fitMe ($productId) {
-		
-		if ( $productId == null ) {
-			throw new NotFoundException('Could not find that product');
-		} else {
-			$this->FeedCJ->id = $productId;
-		}
-		
-		$results = $this->FeedCJ->find('first');
-		$product = $results['FeedCJ']['products']['product'];
-		
-		// get user's sizing data if possible
-		$fromUsers = null;
-		try {
-		   $this->loadModel('Users.UserMeasurement');
-		   $fromUsers = $this->UserMeasurement->findSimilarUsers($this->Auth->user('id'));
-		} catch(MissingModelException $e) {		
-			// guess we're not using Measurement data
-		}
-		
-		// get the ratings of this item if possible
-		if ( in_array('Ratings', CakePlugin::loaded()) && !empty($results) ) {
-			if ( !empty($product['manufacturer-name']) && !empty($product['manufacturer-sku']) ) {
-				$id = implode('__', array($product['manufacturer-name'], $product['manufacturer-sku']) );
-				$product['ratings'] = $this->_getRating($id, $fromUsers);
-			}
-		};
-		
-		if ( $this->request->isAjax() ) {
-			$this->layout = null;
-		}
-        
-		$this->set('product', $product);
-		
-	}
+	
 	
 	public function advertisers ($keywords = array()) {
 		
@@ -197,8 +158,8 @@ class _FeedCJsController extends FeedsController {
         
         if (in_array('Ratings', CakePlugin::loaded()) && !empty($items)) {
                 foreach($items as $k => $item) {
-                    if(!empty($item['manufacturer-name']) && !empty($item['manufacturer-sku'])) {
-                        $id = implode('__', array($item['manufacturer-name'], $item['manufacturer-sku']));
+                    if(!empty($item['manufacturer-name']) && (!empty($item['manufacturer-sku']) || !empty($item['upc']))) {
+                        $id = implode('__', array($item['manufacturer-name'], $item['manufacturer-sku'], $item['upc']));
                         
                         $items[$k]['ratings'] = $this->_getRating($id);
                     }

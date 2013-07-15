@@ -112,37 +112,6 @@ class _FeedCJ extends FeedsAppModel {
 		}
 		return $results;
 	}
-	
-	
-	public function detectClothingType($result) {
-		if ( !empty($result['name']) ) {
-		    $types = array(
-                'tshirt' => array('t-shirt', 't shirt', 'tee', 'tees'),
-                'pants' => array('jeans', 'pants', 'slacks', 'trousers'),
-                'shirt' => array('shirt', 'long sleeve', 'sweatshirt'),
-                'dress' => array('dress'),
-                'shoes' => array('shoes', 'sneaker', 'sneakers', 'heels', 'boots', 'sandals', 'clogs'),
-                'coat' => array('coat', 'jacket', 'wind breaker')
-            );
-			
-
-			$result['type'] = 'unknown';
-			
-			foreach ( $types as $type => $words ) {
-			    foreach($words as $word) {
-			        if ( stripos($result['name'], $word) !== false || stripos($result['description'], $word) !== false ) {
-                        $result['type'] = $type;
-                        return $result;
-                    }
-			    }	
-			}
-            
-		}
-		
-		return $result;
-	}
-
-
 
 	//This Overirides the exists function to search by sku
 	public function exists($id = null) {
