@@ -5,7 +5,7 @@ App::uses('FeedsController', 'Feeds.Controller');
  * See for params http://help.cj.com/en/web_services/product_catalog_search_service_rest.htm
  */
 
-class FeedCJsController extends FeedsController {
+class _FeedCJsController extends FeedsController {
 		
 	public $uses = array('Feeds.FeedCJ');
 	
@@ -68,7 +68,7 @@ class FeedCJsController extends FeedsController {
             
             $conditions['keywords'] = $conditions['keywords'].' +' . $category. ' ' .$this->defaultKeywords;
             $conditions['records-per-page'] = $records_per_page;
-            
+           
 			$results = $this->FeedCJ->find('all', array(
 				'conditions' => $conditions,
 			));
@@ -76,8 +76,8 @@ class FeedCJsController extends FeedsController {
 			$products = $results['FeedCJ']['products']['product'];
 			if (in_array('Ratings', CakePlugin::loaded()) && !empty($products)) {
 				foreach($products as $k => $product) {
-					if(!empty($product['manufacturer-name']) && !empty($product['manufacturer-sku'])) {
-						$id = implode('__', array($product['manufacturer-name'], $product['manufacturer-sku']));
+					if(!empty($product['manufacturer-name']) && (!empty($product['manufacturer-sku']) || !empty($product['upc']))) {
+						$id = implode('__', array($product['manufacturer-name'], $product['manufacturer-sku'], $product['upc']));
 						
 						$products[$k]['ratings'] = $this->_getRating($id);
 					}
@@ -122,56 +122,18 @@ class FeedCJsController extends FeedsController {
 		
 		// get the ratings of this item if possible
 		if (in_array('Ratings', CakePlugin::loaded()) && !empty($results)) {
-			if(!empty($product['manufacturer-name']) && !empty($product['manufacturer-sku'])) {
-				$id = implode('__', array($product['manufacturer-name'], $product['manufacturer-sku']));
+			if(!empty($product['manufacturer-name']) && (!empty($product['manufacturer-sku']) || !empty($product['upc']))) {
+				$id = implode('__', array($product['manufacturer-name'], $product['manufacturer-sku'], $product['upc']));
 				$product['ratings'] = $this->_getRating($id, $fromUsers);
 			}
 		};
 		/** end change scope **/
-		
+
+		$this->set('title_for_layout', $product['name'] . ' | ' . __SYSTEM_SITE_NAME);
 		$this->set('product', $product);
 	}
 	
-	/**
-	 * @todo Definitely should be in a custom Controller
-	 * 
-	 * @param type $productId
-	 */
-	public function fitMe ($productId) {
-		
-		if ( $productId == null ) {
-			throw new NotFoundException('Could not find that product');
-		} else {
-			$this->FeedCJ->id = $productId;
-		}
-		
-		$results = $this->FeedCJ->find('first');
-		$product = $results['FeedCJ']['products']['product'];
-		
-		// get user's sizing data if possible
-		$fromUsers = null;
-		try {
-		   $this->loadModel('Users.UserMeasurement');
-		   $fromUsers = $this->UserMeasurement->findSimilarUsers($this->Auth->user('id'));
-		} catch(MissingModelException $e) {		
-			// guess we're not using Measurement data
-		}
-		
-		// get the ratings of this item if possible
-		if ( in_array('Ratings', CakePlugin::loaded()) && !empty($results) ) {
-			if ( !empty($product['manufacturer-name']) && !empty($product['manufacturer-sku']) ) {
-				$id = implode('__', array($product['manufacturer-name'], $product['manufacturer-sku']) );
-				$product['ratings'] = $this->_getRating($id, $fromUsers);
-			}
-		};
-		
-		if ( $this->request->isAjax() ) {
-			$this->layout = null;
-		}
-		
-		$this->set('product', $product);
-		
-	}
+	
 	
 	public function advertisers ($keywords = array()) {
 		
@@ -183,87 +145,6 @@ class FeedCJsController extends FeedsController {
 		
 	}
 	
-	/**
-	 * Saves Rating for Feed item.
-	 * Will Return not found if not handed and Rating.
-	 * 
-	 * @param $id string of created feed id. See $model->createIds()
-	 */
-
-	public function rate ($id = null) {
-		try{
-			if ($id == null) {
-				throw new NotFoundException('Please provide and id');
-			}
-
-			$this->FeedCJ->id = $id;
-			$product = $this->FeedCJ->find('first');
-			
-			if(!empty($this->request->data)) {
-					if (!in_array('Ratings', CakePlugin::loaded())) {
-						throw new MethodNotAllowedException('Please Install Ratings Plugin');
-					}
-					
-					if(!isset($this->request->data['Rating'])) {
-						$this->Session->setFlash('Need to provide a rating');
-						$this->redirect($this->referer());
-					}
-					//rate(Model $Model, $foreignKey = null, $userId = null, $rating = null, $options = array(), $parent_id = null)
-					$product = $product['FeedCJ']['products']['product'];
-					if(!empty($product['manufacturer-name']) && !empty($product['manufacturer-sku'])) {
-						$foreignKey = implode('__', array($product['manufacturer-name'], $product['manufacturer-sku']));
-						$userId = $this->Session->read('Auth.User.id');
-						$rating = $this->request->data['Rating']['value'];
-						$options = array();
-						$parent = array();
-						//Build the Parent Element
-						$parent['user_id'] = $userId;
-						$parent['foreign_key'] = $foreignKey;
-						$parent['model'] = 'FeedCJ';
-						$parent['value'] = $rating;
-						$parent['title'] = $this->request->data['Rating']['title'];
-						$parent['review'] = $this->request->data['Rating']['review'];
-						$parent['data'] = serialize($product);
-						$parent['parent_id'] = null;
-						
-						$options['records']['Rating'][] = $parent;
-						//Save the Parent Rating
-						if(!empty($this->request->data['Rating']['SubRating'])) {
-							foreach($this->request->data['Rating']['SubRating'] as $k => $subRating) {
-								$child = array();
-								$child['user_id'] = $parent['user_id'];
-								$child['foreign_key'] = $parent['foreign_key'];
-								$child['model'] = $parent['model'];
-								$child['value'] = $subRating;
-								$child['type'] = $k;
-								$options['records']['SubRatings'][] = $child;
-							}
-						}
-						if($this->FeedCJ->rate($foreignKey, $userId, $rating, $options)) {
-							$this->Session->setFlash('Thank you for your input');
-							$this->redirect($this->referer());
-						}else {
-							throw new CakeException('Unable to save rating');
-						}
-						
-						
-						
-					}else {
-						throw new OutOfBoundsException(__d('ratings', 'Can only Rate Items with valid Manufacturer Name and SKU'));
-					}
-				}
-			
-			
-				if($this->request->isAjax()) {
-					$this->layout=null;
-				}
-				$this->set('product', $product['FeedCJ']['products']['product']);
-			}
-			catch (Exception $e) {
-					$this->Session->setFlash('Error: ' . $e->getMessage());
-					$this->redirect($this->referer());
-			}
-	}
 	
 
 	public function retrieveItems ($type, $userId) {
@@ -274,6 +155,17 @@ class FeedCJsController extends FeedsController {
 			$results = $this->FeedCJ->find('first');
 			$items[] = $results['FeedCJ']['products']['product'];
 		}
+        
+        if (in_array('Ratings', CakePlugin::loaded()) && !empty($items)) {
+                foreach($items as $k => $item) {
+                    if(!empty($item['manufacturer-name']) && (!empty($item['manufacturer-sku']) || !empty($item['upc']))) {
+                        $id = implode('__', array($item['manufacturer-name'], $item['manufacturer-sku'], $item['upc']));
+                        
+                        $items[$k]['ratings'] = $this->_getRating($id);
+                    }
+                }
+        }
+        
 		return $items;
 	}
 	
@@ -306,7 +198,8 @@ class FeedCJsController extends FeedsController {
 		
 	}
 	
-	private function _getRating($id, $fromUsers = false) {
+	protected function _getRating($id, $fromUsers = false) {
+		
 		$conditions = array('Rating.foreign_key' => $id);
 		
 		if ( $fromUsers ) {
@@ -341,5 +234,9 @@ class FeedCJsController extends FeedsController {
 		
 		return $ratings;
 	}
+}
+
+if (!isset($refuseInit)) {
+    class FeedCJsController extends _FeedCJsController {}
 }
 
