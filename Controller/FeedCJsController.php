@@ -307,7 +307,6 @@ class FeedCJsController extends FeedsController {
 	}
 	
 	private function _getRating($id, $fromUsers = false) {
-		
 		$conditions = array('Rating.foreign_key' => $id);
 		
 		if ( $fromUsers ) {
