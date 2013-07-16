@@ -138,6 +138,7 @@ class _FeedCJ extends FeedsAppModel {
 	
 	private function _createIds ($product) {
 		debug($product);
+		break;
 		//set defaults	
 		return implode("__", array(
 				$product['advertiser-id'],
