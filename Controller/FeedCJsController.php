@@ -76,17 +76,14 @@ class _FeedCJsController extends FeedsController {
 			$products = $results['FeedCJ']['products']['product'];
 			if (in_array('Ratings', CakePlugin::loaded()) && !empty($products)) {
 				foreach($products as $k => $product) {
-					if(!empty($product['manufacturer-name']) && (!empty($product['manufacturer-sku']) || !empty($product['upc']))) {
-						$id = implode('__', array($product['manufacturer-name'], $product['manufacturer-sku'], $product['upc']));
-						
-						$products[$k]['ratings'] = $this->_getRating($id);
-					}
+					$products[$k]['ratings'] = $this->_getProductRating($product);
 				}
 			}
 		}catch(Exception $e) {
 			$this->Session->setFlash($e);
 		}
         
+		$this->set('pagetitle', 'Shop for Products');
         $this->set('categories', $this->categories);
         $this->set('keywords', str_replace('+', '', $keywords));
         $this->set('category', $category);
@@ -122,10 +119,7 @@ class _FeedCJsController extends FeedsController {
 		
 		// get the ratings of this item if possible
 		if (in_array('Ratings', CakePlugin::loaded()) && !empty($results)) {
-			if(!empty($product['manufacturer-name']) && (!empty($product['manufacturer-sku']) || !empty($product['upc']))) {
-				$id = implode('__', array($product['manufacturer-name'], $product['manufacturer-sku'], $product['upc']));
-				$product['ratings'] = $this->_getRating($id, $fromUsers);
-			}
+				$product['ratings'] = $this->_getProductRating($product);
 		};
 		/** end change scope **/
 
@@ -158,11 +152,7 @@ class _FeedCJsController extends FeedsController {
         
         if (in_array('Ratings', CakePlugin::loaded()) && !empty($items)) {
                 foreach($items as $k => $item) {
-                    if(!empty($item['manufacturer-name']) && (!empty($item['manufacturer-sku']) || !empty($item['upc']))) {
-                        $id = implode('__', array($item['manufacturer-name'], $item['manufacturer-sku'], $item['upc']));
-                        
-                        $items[$k]['ratings'] = $this->_getRating($id);
-                    }
+                      $items[$k]['ratings'] = $this->_getProductRating($item);
                 }
         }
         
@@ -196,6 +186,16 @@ class _FeedCJsController extends FeedsController {
 			$this->set('userFavorites', $this->Favorite->getAllFavorites($userId));
 		}
 		
+	}
+	
+	protected function _getProductRating ($product, $userids = false) {
+		if ( !empty($product['manufacturer-name']) && (!empty($product['manufacturer-sku']) || !empty($product['upc']))) {
+                $id = implode('__', array($product['manufacturer-name'], $product['manufacturer-sku'], $product['upc']));
+                
+                return $this->_getRating($id, $userids);
+            }else {
+            	return array();
+            }
 	}
 	
 	protected function _getRating($id, $fromUsers = false) {
@@ -233,6 +233,16 @@ class _FeedCJsController extends FeedsController {
 		}
 		
 		return $ratings;
+	}
+	
+	/**
+	 * Function to return user categories
+	 * @return the $categories aray
+	 */
+	
+	public function get_categories() {
+		$this->autoRender = false; //For request action only
+		return $this->categories;
 	}
 }
 

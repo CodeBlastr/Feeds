@@ -82,9 +82,8 @@ class _FeedCJ extends FeedsAppModel {
 		if(!isset($results['FeedCJ']['products']['product'])) {
 			$results['FeedCJ']['products']['product'] = array();
 		}
-		
 		//Creates Ids that we can search by
-		if(is_array($results['FeedCJ']['products']['product'])) {
+		if(isset($results['FeedCJ']['products']['product'][0])) {
 			foreach ($results['FeedCJ']['products']['product'] as $key => $product) {
 				$product['id'] = $this->_createIds($product);
 				$results['FeedCJ']['products']['product'][$key] = $product;
@@ -137,8 +136,6 @@ class _FeedCJ extends FeedsAppModel {
 	 */
 	
 	private function _createIds ($product) {
-		debug($product);
-		break;
 		//set defaults	
 		return implode("__", array(
 				$product['advertiser-id'],
