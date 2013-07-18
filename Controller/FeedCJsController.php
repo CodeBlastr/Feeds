@@ -18,6 +18,7 @@ class _FeedCJsController extends FeedsController {
         "Womens Women's" => "Women's",
     );
 	
+	public $allowedActions = array('get_categories');
 	
 	public function index () {
 		//Defaults    
