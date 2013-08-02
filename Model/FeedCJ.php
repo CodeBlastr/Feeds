@@ -67,7 +67,7 @@ class _FeedCJ extends FeedsAppModel {
 		}
 		
 		//Set Search to Always All so it is mapped properly in datasource
-		$typesearch = $this->_metaType('all', $query);
+		$typesearch = $this->_findType('all', $query);
 		$results = parent::find($typesearch, $query);
 		//Checks the array for error messages
 		
