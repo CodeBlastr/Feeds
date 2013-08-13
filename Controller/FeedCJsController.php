@@ -7,7 +7,7 @@ App::uses('FeedsController', 'Feeds.Controller');
 
 class _FeedCJsController extends FeedsController {
 		
-	public $uses = array('Feeds.FeedCJ');
+	public $uses = array('Feeds.FeedCJ', 'Feeds.FeedAmazon');
 	
 	public $viewPath = 'Feeds';
     
@@ -244,6 +244,11 @@ class _FeedCJsController extends FeedsController {
 	public function get_categories() {
 		$this->autoRender = false; //For request action only
 		return $this->categories;
+	}
+	
+	public function awstest() {
+		$this->view = 'index';
+		$this->FeedAmazon->find('all');
 	}
 }
 
