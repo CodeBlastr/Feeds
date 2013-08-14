@@ -8,84 +8,75 @@ class _FeedAmazon extends FeedsAppModel {
 	
 	public $useTable = false;
 	
-	/*
-	 * Property for Advertiser id lookup
-	 * Limits the results to a set of particular advertisers (CIDs) using one of the following four values.
-	 * 
-	 * CIDs: You may provide list of one or more advertiser CIDs, separated by commas, to limit the results to a specific sub-set of merchants.
-	 * Empty String: You may provide an empty string to remove any advertiser-specific restrictions on the search.
-	 * joined: This special value (joined) restricts the search to advertisers with which you have a relationship.
-	 * notjoined: This special value (notjoined) restricts the search to advertisers with which you do not have a relationship.
+	/**
+	 * Array of fields that map to our fields
+	 * $arr['ourfield'] => 'mapped_field'
 	 */
-	public $advertiserParam = 'joined'; 
-
-	public function getCategories() {
-		App::uses('HttpSocket', 'Network/Http');
-		
-		return $this->getDataSource()->categories();
-	}
 	
-	public function getAdvertisers($keywords = array(), $advertiserName = null) {
-		App::uses('HttpSocket', 'Network/Http');
-		
-		return $this->getDataSource()->advertisers($this->advertiserParam, $advertiserName, $keywords);
-	}
+	public $fieldmap = array(
+		'name' => 'ItemAttributes.Title',
+		'description' => 'EditorialReviews.EditorialReview.Content',
+		'advertiser-name' => 'ItemAttributes.Publisher',
+		'advertiser-id' => 'ASIN',
+		'category' => 'ItemAttributes.ProductTypeName',
+		'image_url' => 'LargeImage.URL',
+		'manufacturer_name' => 'ItemAttributes.Brand',
+		'manufacturer_idenifier' => 'ItemAttributes.Model',
+		'upc' => 'ItemAttributes.UPC',
+		'isbn' => 'ItemAttributes.ISBN',
+		'retail_price' => '',
+		'price' => 'ItemAttributes.ListPrice.Amount',
+		'sale_price' => '',
+		'currency' => 'ItemAttributes.ListPrice.CurrencyCode',
+		'buy_url' => 'DetailPageURL',
+	);
 	
 	/*
 	 * Overriding the find method, so we can add our custom query params
 	 */
-	public function find($type = 'first', $query = array()) {
-		$conditions = array();
-		if(!empty($this->id)) {
-			$conditions = $this->_explodeIds($this->id);
+	public function find($type = 'all', $query = array()) {
+		
+		if(!empty($this->id) && $type == 'first') {
+			$query = array('conditions' => $this->_explodeIds($this->id));
+		}
+		
+		if($type == 'first') {
+			$query['conditions']['first'] = true;
 		}
 		
 		//Set Search to Always All so it is mapped properly in datasource
 		$typesearch = $this->_findType('all', $query);
 		$results = parent::find($typesearch, $query);
-		//Checks the array for error messages
 		
-		debug(Set::flatten($results['FeedAmazon']['Item']));
-		break;
 		//Checks for errors
-		if(isset($results['FeedCJ']['error-message'])) {
+		if(!isset($results['FeedAmazon']['Item'])) {
 		
-			throw new BadRequestException($results['FeedCJ']['error-message'], 1);
+			throw new BadRequestException('No items Found', 1);
 			
 		}
 		
 		//Returns empty array if nothing is found
-		if(!isset($results['FeedCJ']['products']['product'])) {
-			$results['FeedCJ']['products']['product'] = array();
+		if(!isset($results['FeedAmazon']['Item'])) {
+			$results['FeedAmazon']['Item'] = array();
+			$this->totalResults = 0;
+		}else {
+			$this->totalResults = $results['FeedAmazon']['TotalResults'];
 		}
-		//Creates Ids that we can search by
-		if(isset($results['FeedCJ']['products']['product'][0])) {
-			foreach ($results['FeedCJ']['products']['product'] as $key => $product) {
-				$product['id'] = $this->_createIds($product);
-				$results['FeedCJ']['products']['product'][$key] = $product;
-			}
-		}else {	
-			$results['FeedCJ']['products']['product']['id'] = $this->_createIds($results['FeedCJ']['products']['product']);
-		}
-		
-		return $results; 
-	}
-	
-	
-	public function afterFind($results, $primary = false) {
-		if ( !empty($results) ) {
 
-			if ( $results['FeedCJ']['products']['@records-returned'] == '1' ) {
-				$results['FeedCJ']['products']['product'] = $this->detectClothingType($results['FeedCJ']['products']['product']);
-			} elseif ( (int)$results['FeedCJ']['products']['@records-returned'] > 1  ) {
-				foreach ( $results['FeedCJ']['products']['product'] as &$result ) {
-					//debug($result);
-					$result = $this->detectClothingType($result);
-				}
+		//Creates Ids that we can search by
+		if(isset($results['FeedAmazon']['Item'][0])) {
+			foreach ($results['FeedAmazon']['Item'] as $key => $product) {
+				$product = Set::flatten($product);
+				$product['id'] = $this->_createIds($product);
+				$results['FeedAmazon']['Item'][$key] = $product;
 			}
-			
+		}else {
+			$results['FeedAmazon']['Item'] = Set::flatten($results['FeedAmazon']['Item']);
+			$results['FeedAmazon']['Item']['id'] = $this->_createIds($results['FeedAmazon']['Item']);
 		}
-		return $results;
+		$this->feedData = $results;
+		debug($results);
+		return $this->_renderproductdata($results['FeedAmazon']['Item']); 
 	}
 
 	//This Overirides the exists function to search by sku
@@ -97,12 +88,12 @@ class _FeedAmazon extends FeedsAppModel {
 			return false;
 		}
 		$conditions = $this->_explodeIds($id);
-		$conditions['keywords'] = $this->defaultKeywords;
+		
 		$query = array(
 			'conditions' => $conditions);
-		$results = $this->find('all', $query);
+		$results = $this->find('first', $query);
 		
-		return (isset($results['FeedCJ']['products']['product']) && count($results['FeedCJ']['products']['product']) > 0);
+		return (isset($results) && count($results) > 0);
 	}
 	
 	/**
@@ -112,13 +103,14 @@ class _FeedAmazon extends FeedsAppModel {
 	 */
 	
 	private function _createIds ($product) {
-		//set defaults	
+		//set defaults
+		
 		return implode("__", array(
-				$product['advertiser-id'],
-				$product['sku'],
-				$product['manufacturer-name'],
-				$product['manufacturer-sku'],
-				$product['upc'],
+				str_replace('__', '', $product['ASIN']),
+				str_replace('__', '', $product['ItemAttributes.Brand']),
+				str_replace('__', '', $product['ItemAttributes.UPC']),
+				str_replace('__', '', $product['ItemAttributes.ISBN']),
+				'amazon'
 		));
 	}
 	
@@ -130,11 +122,11 @@ class _FeedAmazon extends FeedsAppModel {
 	
 	public function _explodeIds ($id) {
 		$id = explode("__", $id);
-		$product['advertiser-ids'] = isset($id[0]) ? $id[0] : 0;
-		$product['advertiser-sku'] = isset($id[1]) ? $id[1] : 0;
-		$product['manufacturer-name'] = isset($id[2]) ? $id[2] : 0;
-		$product['manufacturer-sku'] = isset($id[3]) ? $id[3] : 0;
-		$product['upc'] = isset($id[4]) ? $id[4] : 0;
+		$product['ASIN'] = isset($id[0]) ? $id[0] : 0;
+		$product['ItemAttributes.Brand'] = isset($id[1]) ? $id[1] : 0;
+		$product['ItemAttributes.UPC'] = isset($id[2]) ? $id[2] : 0;
+		$product['ItemAttributes.ISBN'] = isset($id[3]) ? $id[3] : 0;
+		$product['Model'] = isset($id[4]) ? $id[4] : 0;
 		
 		foreach($product as $k => $v) {
 			if(empty($v)) {
@@ -145,26 +137,6 @@ class _FeedAmazon extends FeedsAppModel {
 		return $product;
 	}
 
-    /**
-     * Explode generated Rating Id 
-     * @param $id array generated by for ratings
-     * @return product array
-     */
-    
-    public function explodeRatingIds ($id) {
-        $id = explode("__", $id);
-        $product['manufacturer-name'] = isset($id[0]) ? $id[0] : 0;
-        $product['manufacturer-sku'] = isset($id[1]) ? $id[1] : 0;
-        $product['upc'] = isset($id[2]) ? $id[2] : 0;
-        
-        foreach($product as $k => $v) {
-            if(empty($v)) {
-                unset($product[$k]);
-            }
-        }
-
-        return $product;
-    }
 }
 
 if (!isset($refuseInit)) {

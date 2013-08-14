@@ -213,6 +213,10 @@ class CommissionJunction extends DataSource {
 			
 		}
 		
+		if(isset($query['Model'])) {
+			unset($query['Model']);
+		}
+		
 		$request = array(
 			'header' => array(
 				'Authorization' => $this->config['apiKey'],

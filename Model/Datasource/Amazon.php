@@ -16,7 +16,7 @@ class Amazon extends DataSource {
         'AWSAccessKeyId' => 'AKIAIXQZBQCNQ2WYDJJA',
 		'AssociateTag' => 'theh06e-20',
 		'Condition' => 'New',
-		'Keywords' => '',
+		'Keywords' => 'Clothing',
 		'Operation' => 'ItemSearch',
 		'ResponseGroup' => 'Medium',
 		'SearchIndex' => 'Apparel',
@@ -46,104 +46,7 @@ class Amazon extends DataSource {
 			'cookies' => array()
     	);
 	
-/**
- * If we want to create() or update() we need to specify the fields
- * available. We use the same array keys as we do with CakeSchema, eg.
- * fixtures and schema migrations.
- */
-    protected $_schema = array(
-        'ad-id' => array(
-            'type' => 'integer',
-            'null' => false,
-            'key' => 'primary',
-        ),
-        'advertiser-id' => array(
-            'type' => 'integer',
-            'null' => false,
-            'key' => 'primary',
-        ),
-        'advertiser-name' => array(
-            'type' => 'string',
-            'null' => true,
-            'length' => 255,
-        ),
-        'advertiser-category' => array(
-            'type' => 'string',
-            'null' => true,
-            'length' => 255,
-        ),
-        'buy-url' => array(
-            'type' => 'string',
-            'null' => true,
-            'length' => 255,
-        ),
-        'catalog-id' => array(
-            'type' => 'integer',
-            'null' => false,
-        ),
-        'currency' => array(
-            'type' => 'string',
-            'null' => true,
-            'length' => 5,
-        ),
-        'description' => array(
-            'type' => 'string',
-            'null' => true,
-            'length' => 255,
-        ),
-        'image-url' => array(
-            'type' => 'string',
-            'null' => true,
-            'length' => 255,
-        ),
-        'in-stock' => array(
-            'type' => 'boolean',
-       		'length' => 1,
-       		'null' => true,
-        ),
-        'isbn' => array(
-            'type' => 'string',
-            'null' => true,
-            'length' => 255,
-        ),
-        'manufacturer-name' => array(
-            'type' => 'string',
-            'null' => true,
-            'length' => 255,
-        ),
-        'manufacturer-sku' => array(
-            'type' => 'string',
-            'null' => true,
-            'length' => 255,
-        ),
-        'name' => array(
-            'type' => 'string',
-            'null' => true,
-            'length' => 255,
-        ),
-        'price' => array(
-            'type' => 'float',
-            'null' => true,
-        ),
-        'retail-price' => array(
-            'type' => 'float',
-            'null' => true,
-        ),
-        'sale-price' => array(
-            'type' => 'float',
-            'null' => true,
-        ),
-        'sku' => array(
-            'type' => 'string',
-            'null' => true,
-            'length' => 255,
-        ),
-        'upc' => array(
-            'type' => 'string',
-            'null' => true,
-            'length' => 255,
-        ),
-    );
+
 
 /**
  * Create our HttpSocket and handle any config tweaks.
@@ -151,16 +54,18 @@ class Amazon extends DataSource {
     public function __construct($config) {
         parent::__construct($config);
 		
+		if(isset($config['private_key'])) {
+			$this->private_key = $config['private_key'];
+			unset($config['private_key']);
+		}else {
+			throw new Exception('No Amazon key found');
+		}
+		
 		$this->config['Timestamp'] = gmdate("Y-m-d\TH:i:s\Z");
 		
 		$this->Http = new HttpSocket();
         
     }
-
-/**
- * Since datasources normally connect to a database there are a few things
- * we must change to get them to work without a database.
- */
 
 /**
  * listSources() is for caching. You'll likely want to implement caching in
@@ -201,16 +106,29 @@ class Amazon extends DataSource {
  * 
  */
     public function read(Model $model, $queryData = array(), $recursive = null) {
-		$private_key = '1cmj0ZYkaeqTx0X/3okXhZUvfrEgLTnjS5wYlP0V';
 		//Build Query
 		$query = array();
+		
 		if(!empty($queryData['conditions'])) {
 			$query = $queryData['conditions'];
 		}
 		
+		//find('first') has been called use item lookup
+		if(isset($query['first']) && isset($query['ASIN'])) {
+			$this->config['Operation'] = 'ItemLookup';
+			$this->config['ItemId'] = $query['ASIN'];
+			unset($this->config['Keywords']);
+			unset($this->config['SearchIndex']);
+			ksort($this->config);
+		}
+
+		if(isset($query['Model'])) {
+			unset($query['Model']);
+		}
+		
 		unset($this->config['datasource']);
 		
-		$query = array_merge($query, $this->config);
+		$query = $this->config;
 		
 		$this->httpRequest['uri']['query'] = $query;
 	
@@ -224,7 +142,7 @@ class Amazon extends DataSource {
 		$string_to_sign = $this->httpRequest['method'] . "\n" . $this->httpRequest['uri']['host'] . "\n" . $this->httpRequest['uri']['path'] . "\n" . implode("&", $canonicalized_query);
 	
 		// calculate HMAC with SHA256 and base64-encoding
-		$signature = base64_encode(hash_hmac("sha256", $string_to_sign, $private_key, True));
+		$signature = base64_encode(hash_hmac("sha256", $string_to_sign, $this->private_key, True));
 		
 		// encode the signature for the request
 		$signature = str_replace("%7E", "~", rawurlencode($signature));
@@ -237,8 +155,13 @@ class Amazon extends DataSource {
         if($xmlString !== '') {
         	$xmlArray = Xml::toArray(Xml::build($xmlString));
         }
-		
-        return array($model->alias => $xmlArray['ItemSearchResponse']['Items']);
+	
+		if (isset($xmlArray['ItemSearchResponse']['Items'])) {
+			return array($model->alias => $xmlArray['ItemSearchResponse']['Items']);
+		}else {
+			return array($model->alias => $xmlArray['ItemLookupResponse']['Items']);
+		}
+        
     }
 
 /**

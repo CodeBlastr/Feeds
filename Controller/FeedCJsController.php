@@ -6,8 +6,6 @@ App::uses('FeedsController', 'Feeds.Controller');
  */
 
 class _FeedCJsController extends FeedsController {
-		
-	public $uses = array('Feeds.FeedCJ', 'Feeds.FeedAmazon');
 	
 	public $viewPath = 'Feeds';
     
@@ -162,6 +160,22 @@ class _FeedCJsController extends FeedsController {
 	
 	
 	public function __construct($request = null, $response = null) {
+		
+		//Inits the feeds we have datasources for throws exception if none configured
+		App::uses('ConnectionManager', 'Model');
+		$sources = ConnectionManager::enumConnectionObjects ();
+		
+		if(count($sources) == 2 && isset($sources['default']) && isset($sources['test'])) {
+			throw new MethodNotAllowedException('No Feed Sources Configured', 1);
+		}
+		
+		if(isset($sources['commissionjunction'])) {
+			$this->uses[] = 'Feeds.FeedCJ';
+		}
+		
+		if(isset($sources['amazon'])) {
+			$this->uses[] = 'Feeds.FeedAmazon';
+		}
 	
 		//Adds Rateable Helpers.
 		if (in_array('Ratings', CakePlugin::loaded())) {
@@ -248,7 +262,10 @@ class _FeedCJsController extends FeedsController {
 	
 	public function awstest() {
 		$this->view = 'index';
-		$this->FeedAmazon->find('all');
+		
+		$this->FeedAmazon->id = 'B00E3FN2LW__Ashley Stewart______amazon';
+		debug($this->FeedAmazon->find('first'));
+		break;
 	}
 }
 

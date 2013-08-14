@@ -69,9 +69,8 @@ class _FeedCJ extends FeedsAppModel {
 		//Set Search to Always All so it is mapped properly in datasource
 		$typesearch = $this->_findType('all', $query);
 		$results = parent::find($typesearch, $query);
-		//Checks the array for error messages
 		
-		//Checks for errors
+		//Checks the array for error messages
 		if(isset($results['FeedCJ']['error-message'])) {
 		
 			throw new BadRequestException($results['FeedCJ']['error-message'], 1);
@@ -92,24 +91,10 @@ class _FeedCJ extends FeedsAppModel {
 			$results['FeedCJ']['products']['product']['id'] = $this->_createIds($results['FeedCJ']['products']['product']);
 		}
 		
+		$this->feedData = $results;
+		$this->productData = $this->_renderproductdata();
+		
 		return $results; 
-	}
-	
-	
-	public function afterFind($results, $primary = false) {
-		if ( !empty($results) ) {
-
-			if ( $results['FeedCJ']['products']['@records-returned'] == '1' ) {
-				$results['FeedCJ']['products']['product'] = $this->detectClothingType($results['FeedCJ']['products']['product']);
-			} elseif ( (int)$results['FeedCJ']['products']['@records-returned'] > 1  ) {
-				foreach ( $results['FeedCJ']['products']['product'] as &$result ) {
-					//debug($result);
-					$result = $this->detectClothingType($result);
-				}
-			}
-			
-		}
-		return $results;
 	}
 
 	//This Overirides the exists function to search by sku
@@ -138,11 +123,12 @@ class _FeedCJ extends FeedsAppModel {
 	private function _createIds ($product) {
 		//set defaults	
 		return implode("__", array(
-				$product['advertiser-id'],
-				$product['sku'],
-				$product['manufacturer-name'],
-				$product['manufacturer-sku'],
-				$product['upc'],
+				str_replace('__', '', $product['advertiser-id']),
+				str_replace('__', '', $product['sku']),
+				str_replace('__', '', $product['manufacturer-name']),
+				str_replace('__', '', $product['manufacturer-sku']),
+				str_replace('__', '', $product['upc']),
+				'cj'
 		));
 	}
 	
@@ -159,6 +145,7 @@ class _FeedCJ extends FeedsAppModel {
 		$product['manufacturer-name'] = isset($id[2]) ? $id[2] : 0;
 		$product['manufacturer-sku'] = isset($id[3]) ? $id[3] : 0;
 		$product['upc'] = isset($id[4]) ? $id[4] : 0;
+		$product['Model'] = isset($id[5]) ? $id[5] : 0;
 		
 		foreach($product as $k => $v) {
 			if(empty($v)) {
