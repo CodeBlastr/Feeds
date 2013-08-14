@@ -20,6 +20,25 @@ class _FeedCJ extends FeedsAppModel {
 	 * notjoined: This special value (notjoined) restricts the search to advertisers with which you do not have a relationship.
 	 */
 	public $advertiserParam = 'joined'; 
+	
+	public $fieldmap = array(
+		'name' => 'name',
+		'description' => 'description',
+		'advertiser-name' => 'advertiser-name',
+		'advertiser-id' => 'advertiser-id',
+		'category' => 'advertiser-category',
+		'image_url' => 'image-url',
+		'manufacturer_name' => 'manufacturer-name',
+		'manufacturer_idenifier' => 'manufacturer-sku',
+		'upc' => 'upc',
+		'isbn' => 'isbn',
+		'retail_price' => 'retail-price',
+		'price' => 'price',
+		'sale_price' => 'sale-price',
+		'currency' => 'currency',
+		'buy_url' => 'buy-url',
+		'product_id' => 'id'
+	);
 
 	public function getCategories() {
 		App::uses('HttpSocket', 'Network/Http');
@@ -81,6 +100,9 @@ class _FeedCJ extends FeedsAppModel {
 		if(!isset($results['FeedCJ']['products']['product'])) {
 			$results['FeedCJ']['products']['product'] = array();
 		}
+		
+		$this->totalResults = $results['FeedCJ']['products']['@total-matched'];
+		
 		//Creates Ids that we can search by
 		if(isset($results['FeedCJ']['products']['product'][0])) {
 			foreach ($results['FeedCJ']['products']['product'] as $key => $product) {
@@ -92,9 +114,9 @@ class _FeedCJ extends FeedsAppModel {
 		}
 		
 		$this->feedData = $results;
-		$this->productData = $this->_renderproductdata();
 		
-		return $results; 
+		return $this->_renderproductdata($results['FeedCJ']['products']['product']);
+		
 	}
 
 	//This Overirides the exists function to search by sku

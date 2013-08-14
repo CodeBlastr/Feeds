@@ -29,6 +29,7 @@ class _FeedAmazon extends FeedsAppModel {
 		'sale_price' => '',
 		'currency' => 'ItemAttributes.ListPrice.CurrencyCode',
 		'buy_url' => 'DetailPageURL',
+		'product_id' => 'id'
 	);
 	
 	/*
@@ -58,7 +59,6 @@ class _FeedAmazon extends FeedsAppModel {
 		//Returns empty array if nothing is found
 		if(!isset($results['FeedAmazon']['Item'])) {
 			$results['FeedAmazon']['Item'] = array();
-			$this->totalResults = 0;
 		}else {
 			$this->totalResults = $results['FeedAmazon']['TotalResults'];
 		}
@@ -75,7 +75,7 @@ class _FeedAmazon extends FeedsAppModel {
 			$results['FeedAmazon']['Item']['id'] = $this->_createIds($results['FeedAmazon']['Item']);
 		}
 		$this->feedData = $results;
-		debug($results);
+		
 		return $this->_renderproductdata($results['FeedAmazon']['Item']); 
 	}
 

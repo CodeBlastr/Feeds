@@ -24,6 +24,9 @@ class FeedsAppModel extends AppModel {
 		'product_id' => 'id'
 	);
 	
+	//Total Results found 
+	public $totalResults = 0;
+	
 	
 	/**
  	* Constructor
