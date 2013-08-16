@@ -59,7 +59,7 @@ class _FeedsController extends FeedsAppController {
             }catch(Exception $e) {
                 $this->Session->setFlash($e);
             }
-            
+            $this->_sortRel($products, $conditions);
             $keywords = str_replace('+', '', $keywords);
             $this->Session->write('Search.results', $products);
             $this->Session->write('Search.keywords', $keywords);
@@ -111,11 +111,11 @@ class _FeedsController extends FeedsAppController {
 
     public function retrieveItems ($type, $userId) {
         $favorites = $this->Favorite->getFavorites($userId, array('type' => $type));
-
+        $results = array();
         foreach ( $favorites as $favorite ) {
             $Model = $this->_returnModelName($favorite['Favorite']['foreign_key']);
             $this->$Model->id = $favorite['Favorite']['foreign_key'];
-            $results = $this->$Model->find('first');
+            $results = array_merge($results, $this->$Model->find('first'));
         }
         
         if (in_array('Ratings', CakePlugin::loaded()) && !empty($results)) {
@@ -225,13 +225,37 @@ class _FeedsController extends FeedsAppController {
         return $this->categories;
     }
     
-    public function awstest() {
-        $this->view = 'index';
+    /**
+     * Function to sort the feed array for relavency by conditions
+     */
+    
+    protected function _sortRel($products = array(), $conditions) {
         
-        
-        debug($this->FeedAmazon->find('all'));
-        break;
+       if(empty($conditions['keywords'])) {
+           return $products;
+       }
+       $keywords = explode(' ', $conditions['keywords']);
+       
+       if(isset($conditions['category'])) {
+           array_push($keywords, $conditions['category']);
+       }
+       
+       foreach($products as $k => $product){
+           $relrating = 0;
+           foreach($keywords as $keyword) {
+               //By title * 2
+               $relrating = $relrating + substr_count(strtolower($product['name']), strtolower($keyword)) * 2 ; 
+               $relrating = $relrating + substr_count(strtolower($product['descritpion']), strtolower($keyword)); 
+               $relrating = $relrating + substr_count(strtolower($product['category']), strtolower($keyword)); 
+               $relrating = $relrating + substr_count(strtolower($product['manufacturer_name']), strtolower($keyword));
+           }
+           $product['Relevancy'] = $relrating;
+           $products[$k] = $product;
+       }
+       return Set::sort($products, '{n}.Relevancy', 'desc');
+       
     }
+
 }
 
 if (!isset($refuseInit)) {

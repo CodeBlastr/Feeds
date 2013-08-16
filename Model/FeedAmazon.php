@@ -41,14 +41,15 @@ class _FeedAmazon extends FeedsAppModel {
 			$query = array('conditions' => $this->_explodeIds($this->id));
 		}
 		
-		if($type == 'first') {
-			$query['conditions']['first'] = true;
-		}
-		
 		//Set Search to Always All so it is mapped properly in datasource
 		$typesearch = $this->_findType('all', $query);
        
-       
+        $query['conditions'] = $this->_cleanConditions($query['conditions']);
+        
+        if($type == 'first') {
+            $query['conditions']['first'] = true;
+        }
+        
 		$callback =  $query['callbacks'];
         $query['callbacks'] = false;
         $results = parent::find($typesearch, $query);
@@ -130,7 +131,7 @@ class _FeedAmazon extends FeedsAppModel {
 	public function _explodeIds ($id) {
 		$id = explode("__", $id);
 		$product['ASIN'] = isset($id[0]) ? $id[0] : 0;
-		$product['ItemAttributes.Brand'] = isset($id[1]) ? $id[1] : 0;
+		$product['Manufacturer'] = isset($id[1]) ? $id[1] : 0;
 		$product['ItemAttributes.UPC'] = isset($id[2]) ? $id[2] : 0;
 		$product['ItemAttributes.ISBN'] = isset($id[3]) ? $id[3] : 0;
 		
@@ -155,6 +156,36 @@ class _FeedAmazon extends FeedsAppModel {
         $this->id = $id;
         $result = $this->find('first');
         return (count($result) > 0);
+    }
+    
+    /**
+     * Function to clean search params to work with CJ Feed Source
+     */
+    
+    protected function _cleanConditions($conditions) {
+        $new_conditions = array('Keywords' => '');
+        if(!empty($conditions)) {       
+            foreach($conditions as $cond => $value) {
+                //Check the array values and create new array
+                if($cond == 'keywords') {
+                    $new_conditions['Keywords'] = $value;
+                }elseif($cond == 'manufacturer-name') {
+                    $new_conditions['Manufacturer'] = $value;
+                }elseif($cond == 'category') {
+                    $new_conditions['Keywords'] .= ' '.$value; 
+                }elseif($cond == 'ASIN') {
+                    $new_conditions['ASIN'] = $value;
+                }
+                
+            }
+        }
+        
+        //HTML encode
+        foreach($new_conditions as $k => $c) {
+            $new_conditions[$k] = urlencode ($c);
+        }
+            
+        return $new_conditions;
     }
 
 }

@@ -109,6 +109,9 @@ class _FeedCj extends FeedsAppModel {
 		
 		$this->totalResults = $results['FeedCj']['products']['@total-matched'];
 		
+		if($this->totalResults == 0) {
+		    return array();
+		}
 		//Creates Ids that we can search by
 		if(!isset($results['FeedCj']['products']['product'][0])) {
 			$results['FeedCj']['products']['product'] = array($results['FeedCj']['products']['product']);
@@ -127,7 +130,7 @@ class _FeedCj extends FeedsAppModel {
         if ($query['callbacks'] === true || $query['callbacks'] === 'after') {
             $results = $this->_filterResults($results);
         }
-        
+       
 		return $results;
 		
 	}

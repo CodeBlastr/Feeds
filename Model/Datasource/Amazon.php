@@ -118,6 +118,7 @@ class Amazon extends DataSource {
 			$this->config['Operation'] = 'ItemLookup';
 			$this->config['ItemId'] = $query['ASIN'];
 			unset($this->config['Keywords']);
+            unset($query['Keywords']);
 			unset($this->config['SearchIndex']);
 			ksort($this->config);
 		}
@@ -128,7 +129,7 @@ class Amazon extends DataSource {
 		
 		unset($this->config['datasource']);
 		
-		$query = array_merge($query, $this->config);
+		$query = array_merge($this->config, $query);
 		
 	    $key = array_pop($query);
         
