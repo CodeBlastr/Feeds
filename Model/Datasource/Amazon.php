@@ -128,7 +128,13 @@ class Amazon extends DataSource {
 		
 		unset($this->config['datasource']);
 		
-		$query = $this->config;
+		$query = array_merge($query, $this->config);
+		
+	    $key = array_pop($query);
+        
+        ksort($query);
+        
+        $query['private_key'] =  $key;
 		
 		$this->httpRequest['uri']['query'] = $query;
 	

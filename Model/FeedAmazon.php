@@ -16,8 +16,8 @@ class _FeedAmazon extends FeedsAppModel {
 	public $fieldmap = array(
 		'name' => 'ItemAttributes.Title',
 		'description' => 'EditorialReviews.EditorialReview.Content',
-		'advertiser-name' => 'ItemAttributes.Publisher',
-		'advertiser-id' => 'ASIN',
+		'advertiser_name' => 'ItemAttributes.Publisher',
+		'advertiser_id' => 'ASIN',
 		'category' => 'ItemAttributes.ProductTypeName',
 		'image_url' => 'LargeImage.URL',
 		'manufacturer_name' => 'ItemAttributes.Brand',
@@ -47,14 +47,31 @@ class _FeedAmazon extends FeedsAppModel {
 		
 		//Set Search to Always All so it is mapped properly in datasource
 		$typesearch = $this->_findType('all', $query);
-		$results = parent::find($typesearch, $query);
+       
+       
+		$callback =  $query['callbacks'];
+        $query['callbacks'] = false;
+        $results = parent::find($typesearch, $query);
+        $query['callbacks'] = isset($callback) ? $callback : true;
+        
+        //Checks for errors
+        if(!isset($results['FeedAmazon']['Item'])) {
+        
+            throw new BadRequestException('No items Found', 1);
+            
+        }
+        
+        $pageCount = $results['FeedAmazon']['TotalPages'] > 10 ? 10 : $results['FeedAmazon']['TotalPages'];
+        
+        $resultitems = $results['FeedAmazon']['Item'];
+        
+        for($i = 2 ; $i <= $pageCount ; $i++) {
+            $query['conditions']['ItemPage'] = $i;
+            $results = parent::find($typesearch, $query);
+            $resultitems = array_merge($resultitems, $results['FeedAmazon']['Item']);
+        }
 		
-		//Checks for errors
-		if(!isset($results['FeedAmazon']['Item'])) {
-		
-			throw new BadRequestException('No items Found', 1);
-			
-		}
+        $results['FeedAmazon']['Item'] = $resultitems;
 		
 		//Returns empty array if nothing is found
 		if(!isset($results['FeedAmazon']['Item'])) {
@@ -64,36 +81,26 @@ class _FeedAmazon extends FeedsAppModel {
 		}
 
 		//Creates Ids that we can search by
-		if(isset($results['FeedAmazon']['Item'][0])) {
-			foreach ($results['FeedAmazon']['Item'] as $key => $product) {
-				$product = Set::flatten($product);
-				$product['id'] = $this->_createIds($product);
-				$results['FeedAmazon']['Item'][$key] = $product;
-			}
-		}else {
-			$results['FeedAmazon']['Item'] = Set::flatten($results['FeedAmazon']['Item']);
-			$results['FeedAmazon']['Item']['id'] = $this->_createIds($results['FeedAmazon']['Item']);
+		if(!isset($results['FeedAmazon']['Item'][0])) {
+			$results['FeedAmazon']['Item'] = array($results['FeedAmazon']['Item']);
 		}
+        
+        foreach ($results['FeedAmazon']['Item'] as $key => $product) {
+                $product = Set::flatten($product);
+                $product['id'] = $this->_createIds($product);
+                $results['FeedAmazon']['Item'][$key] = $product;
+                $results['FeedAmazon']['Item'][$key]['ItemAttributes.ListPrice.Amount'] = $results['FeedAmazon']['Item'][$key]['ItemAttributes.ListPrice.Amount'] * .01;
+            }
+        
 		$this->feedData = $results;
+        
+        $results = $this->_renderproductdata($results['FeedAmazon']['Item']);
 		
-		return $this->_renderproductdata($results['FeedAmazon']['Item']); 
-	}
-
-	//This Overirides the exists function to search by sku
-	public function exists($id = null) {
-		if ($id === null) {
-			$id = $this->getID();
-		}
-		if ($id === false) {
-			return false;
-		}
-		$conditions = $this->_explodeIds($id);
-		
-		$query = array(
-			'conditions' => $conditions);
-		$results = $this->find('first', $query);
-		
-		return (isset($results) && count($results) > 0);
+        if ($query['callbacks'] === true || $query['callbacks'] === 'after') {
+            $results = $this->_filterResults($results);
+        }
+        
+		return $results;
 	}
 	
 	/**
@@ -126,7 +133,6 @@ class _FeedAmazon extends FeedsAppModel {
 		$product['ItemAttributes.Brand'] = isset($id[1]) ? $id[1] : 0;
 		$product['ItemAttributes.UPC'] = isset($id[2]) ? $id[2] : 0;
 		$product['ItemAttributes.ISBN'] = isset($id[3]) ? $id[3] : 0;
-		$product['Model'] = isset($id[4]) ? $id[4] : 0;
 		
 		foreach($product as $k => $v) {
 			if(empty($v)) {
@@ -136,6 +142,20 @@ class _FeedAmazon extends FeedsAppModel {
 
 		return $product;
 	}
+    
+    //This Overirides the exists function to search by sku
+    public function exists($id = null) {
+        if ($id === null) {
+            $id = $this->getID();
+        }
+        if ($id === false) {
+            return false;
+        }
+        
+        $this->id = $id;
+        $result = $this->find('first');
+        return (count($result) > 0);
+    }
 
 }
 
