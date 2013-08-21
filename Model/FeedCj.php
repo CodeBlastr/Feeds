@@ -5,6 +5,8 @@ class _FeedCj extends FeedsAppModel {
 	public $useDbConfig = 'commissionjunction';
 	
 	public $name = 'FeedCj';
+    
+    public $feedName = 'cj';
 	
 	public $useTable = false;
 	
@@ -130,7 +132,7 @@ class _FeedCj extends FeedsAppModel {
         if ($query['callbacks'] === true || $query['callbacks'] === 'after') {
             $results = $this->_filterResults($results);
         }
-       
+        
 		return $results;
 		
 	}
@@ -166,7 +168,7 @@ class _FeedCj extends FeedsAppModel {
 				str_replace('__', '', $product['manufacturer-name']),
 				str_replace('__', '', $product['manufacturer-sku']),
 				str_replace('__', '', $product['upc']),
-				'cj'
+				$this->feedName,
 		));
 	}
 	
