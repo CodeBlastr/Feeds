@@ -145,7 +145,6 @@ class Amazon extends DataSource {
 			$value = str_replace("%7E", "~", rawurlencode($value));
 			$canonicalized_query[] = $param . "=" . $value;
 		}
-		
 		$string_to_sign = $this->httpRequest['method'] . "\n" . $this->httpRequest['uri']['host'] . "\n" . $this->httpRequest['uri']['path'] . "\n" . implode("&", $canonicalized_query);
 	
 		// calculate HMAC with SHA256 and base64-encoding
@@ -162,7 +161,12 @@ class Amazon extends DataSource {
         if($xmlString !== '') {
         	$xmlArray = Xml::toArray(Xml::build($xmlString));
         }
-	
+	    
+        //return empty array if no results found
+        if(isset($xmlArray['ItemSearchResponse']['Items']['Request']['Errors'])) {
+            return array();
+        }
+        
 		if (isset($xmlArray['ItemSearchResponse']['Items'])) {
 			return array($model->alias => $xmlArray['ItemSearchResponse']['Items']);
 		}else {

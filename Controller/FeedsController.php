@@ -50,14 +50,14 @@ class _FeedsController extends FeedsAppController {
                 }
                 
                 
-                if (in_array('Ratings', CakePlugin::loaded()) && !empty($items)) {
-                    foreach($items as $k => $item) {
-                          $items[$k]['Ratings'] = $this->_getProductRating($item['Rating_id']);
+                if (in_array('Ratings', CakePlugin::loaded()) && !empty($products)) {
+                    foreach($products as $k => $item) {
+                          $products[$k]['Ratings'] = $this->_getProductRating($item['Rating_id']);
                     }
                 }
                 
             }catch(Exception $e) {
-                $this->Session->setFlash($e);
+                $this->Session->setFlash($e->message);
             }
             $this->_sortRel($products, $conditions);
             $keywords = str_replace('+', '', $keywords);
@@ -182,7 +182,7 @@ class _FeedsController extends FeedsAppController {
         $conditions = array('Rating.foreign_key' => $id);
         
         if ( $fromUsers ) {
-            $conditions[] = array('Rating.user_id' => $fromUsers);
+            $conditions['Rating.user_id'] = $fromUsers;
         }
         
         $ratings['Ratings'] = $this->Rating->find('all', array(

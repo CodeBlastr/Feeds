@@ -99,7 +99,7 @@ class FeedsAppModel extends AppModel {
      * @return product array
      */
     
-    public function explodeRatingIds ($id) {
+    public function explodeRatingIds ($id, $map = false) {
         $id = explode("__", $id);
         $product['manufacturer_name'] = isset($id[0]) ? $id[0] : 0;
         $product['manufacturer_idenifier'] = isset($id[1]) ? $id[1] : 0;
@@ -111,7 +111,15 @@ class FeedsAppModel extends AppModel {
                 unset($product[$k]);
             }
         }
-
+		
+		if($map) {
+			$mapped = array();
+			foreach($product as $field => $value) {
+				$mapped[$this->fieldmap[$field]] = $value;
+			}
+			$product = $mapped;
+		}
+		
         return $product;
     }
     
@@ -128,7 +136,7 @@ class FeedsAppModel extends AppModel {
                     str_replace('__', '', $product['manufacturer_name']),
                     str_replace('__', '', $product['manufacturer_idenifier']),
                     str_replace('__', '', $product['upc']),
-                    str_replace('__', '', $product['isbn'])
+                    str_replace('__', '', $product['isbn']),
             ));
         }
         

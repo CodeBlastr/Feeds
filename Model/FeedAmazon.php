@@ -3,6 +3,8 @@
 class _FeedAmazon extends FeedsAppModel {
 	
 	public $useDbConfig = 'amazon';
+    
+    public $feedName = 'amazon';
 	
 	public $name = 'FeedAmazon';
 	
@@ -56,9 +58,10 @@ class _FeedAmazon extends FeedsAppModel {
         $query['callbacks'] = isset($callback) ? $callback : true;
         
         //Checks for errors
-        if(!isset($results['FeedAmazon']['Item'])) {
         
-            throw new BadRequestException('No items Found', 1);
+        if(empty($results)) {
+        
+           return array();
             
         }
         
@@ -111,15 +114,21 @@ class _FeedAmazon extends FeedsAppModel {
 	 */
 	
 	private function _createIds ($product) {
-		//set defaults
-		
-		return implode("__", array(
-				str_replace('__', '', $product['ASIN']),
-				str_replace('__', '', $product['ItemAttributes.Brand']),
-				str_replace('__', '', $product['ItemAttributes.UPC']),
-				str_replace('__', '', $product['ItemAttributes.ISBN']),
-				'amazon'
-		));
+		if(!isset($this->feedName)) {
+            return '';
+        }
+        
+        if((!empty($product['manufacturer_name']) && !empty($product['manufacturer_idenifier'])) || !empty($product['upc']) || !empty($product['isbn'])) {
+            return implode("__", array(
+                    str_replace('__', '', $product['manufacturer_name']),
+                    str_replace('__', '', $product['manufacturer_idenifier']),
+                    str_replace('__', '', $product['upc']),
+                    str_replace('__', '', $product['isbn']),
+                    $this->feedName,
+            ));
+        }
+        
+        return '';
 	}
 	
 	/**
