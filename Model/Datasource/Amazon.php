@@ -13,8 +13,8 @@ class Amazon extends DataSource {
  * ``app/Config/database.php`` and will be merged in the ``__construct()``.
  */
     public $config = array(
-        'AWSAccessKeyId' => 'AKIAIXQZBQCNQ2WYDJJA',
-		'AssociateTag' => 'theh06e-20',
+        'AWSAccessKeyId' => '',
+		'AssociateTag' => '',
 		'Condition' => 'New',
 		'Keywords' => 'Clothing',
 		'Operation' => 'ItemSearch',
