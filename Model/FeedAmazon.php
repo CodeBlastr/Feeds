@@ -72,7 +72,7 @@ class _FeedAmazon extends FeedsAppModel {
         for($i = 2 ; $i <= $pageCount ; $i++) {
             $query['conditions']['ItemPage'] = $i;
             $results = parent::find($typesearch, $query);
-            $resultitems = array_merge($resultitems, $results['FeedAmazon']['Item']);
+            $resultitems = is_array($resultitems) ? array_merge($resultitems, $results['FeedAmazon']['Item']) : $results['FeedAmazon']['Item'];
         }
 		
         $results['FeedAmazon']['Item'] = $resultitems;
@@ -97,7 +97,7 @@ class _FeedAmazon extends FeedsAppModel {
             }
         
 		$this->feedData = $results;
-        
+    	
         $results = $this->_renderproductdata($results['FeedAmazon']['Item']);
 		
         if ($query['callbacks'] === true || $query['callbacks'] === 'after') {
@@ -118,12 +118,12 @@ class _FeedAmazon extends FeedsAppModel {
             return '';
         }
         
-        if((!empty($product['manufacturer_name']) && !empty($product['manufacturer_idenifier'])) || !empty($product['upc']) || !empty($product['isbn'])) {
+        if(!empty($product['ItemAttributes.Brand']) || !empty($product['ItemAttributes.UPC']) || !empty($product['ItemAttributes.ISBN'])) {
             return implode("__", array(
-                    str_replace('__', '', $product['manufacturer_name']),
-                    str_replace('__', '', $product['manufacturer_idenifier']),
-                    str_replace('__', '', $product['upc']),
-                    str_replace('__', '', $product['isbn']),
+                    str_replace('__', '', $product['ASIN']),
+                    str_replace('__', '', $product['ItemAttributes.Brand']),
+                    str_replace('__', '', $product['ItemAttributes.UPC']),
+                    str_replace('__', '', $product['ItemAttributes.ISBN']),
                     $this->feedName,
             ));
         }

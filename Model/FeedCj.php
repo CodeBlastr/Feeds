@@ -127,7 +127,7 @@ class _FeedCj extends FeedsAppModel {
 		$this->feedData = $results;
         
         $results = $this->_renderproductdata($results['FeedCj']['products']['product']);
-        
+       
         //Run our callbacks
         if ($query['callbacks'] === true || $query['callbacks'] === 'after') {
             $results = $this->_filterResults($results);
