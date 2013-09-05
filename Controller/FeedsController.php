@@ -5,10 +5,6 @@ class _FeedsController extends FeedsAppController {
     
     //Array of search categories
     // $value => 'Dispaly Name'
-    public $categories = array(
-        "Mens Men's" => "Men's",
-        "Womens Women's" => "Women's",
-    );
     
     public $allowedActions = array('get_categories');
     
@@ -222,7 +218,14 @@ class _FeedsController extends FeedsAppController {
     
     public function get_categories() {
         $this->autoRender = false; //For request action only
-        return $this->categories;
+        $categories = array();
+         foreach($this->uses as $k => $model) {
+            $model = explode('.', $model);
+            if(count($model) > 1 && $model[0] == 'Feeds') {
+                $categories = array_merge($categories, $this->$model[1]->categories);
+            }
+        }
+        return $categories;
     }
     
     /**

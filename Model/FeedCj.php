@@ -12,6 +12,11 @@ class _FeedCj extends FeedsAppModel {
 	
 	public $defaultKeywords = '+Clothing/Apparel';
 	
+	public $categories = array(
+        "Mens Men's" => "Men's",
+        "Womens Women's" => "Women's",
+    );
+	
 	/*
 	 * Property for Advertiser id lookup
 	 * Limits the results to a set of particular advertisers (CIDs) using one of the following four values.

@@ -10,6 +10,11 @@ class _FeedAmazon extends FeedsAppModel {
 	
 	public $useTable = false;
 	
+	public $categories = array(
+        "Mens Men's" => "Men's",
+        "Womens Women's" => "Women's",
+    );
+	
 	/**
 	 * Array of fields that map to our fields
 	 * $arr['ourfield'] => 'mapped_field'
@@ -177,11 +182,17 @@ class _FeedAmazon extends FeedsAppModel {
             foreach($conditions as $cond => $value) {
                 //Check the array values and create new array
                 if($cond == 'keywords') {
-                    $new_conditions['Keywords'] = $value;
+                    $new_conditions['Keywords'] .= $value;
                 }elseif($cond == 'manufacturer-name') {
                     $new_conditions['Manufacturer'] = $value;
                 }elseif($cond == 'category') {
-                    $new_conditions['Keywords'] .= ' '.$value; 
+                	$notstr = '';
+                	foreach ($this->categories as $cat => $v) {
+						if ($cat !== $value) {
+							$notstr = 'and not ' . $v;
+						}
+					}
+                    $new_conditions['Keywords'] .= ' and '.$value.' '; 
                 }elseif($cond == 'ASIN') {
                     $new_conditions['ASIN'] = $value;
                 }

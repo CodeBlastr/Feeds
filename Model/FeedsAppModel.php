@@ -69,19 +69,18 @@ class FeedsAppModel extends AppModel {
                 'dress' => array('dress'),
                 'skirt' => array('skirt', 'skirts', 'mini skirt'),
                 'tshirt' => array('t-shirt', 't shirt', 'tee', 'tees'),
-                'pants' => array('jeans', 'pants', 'slacks', 'trousers'),
+                'pants' => array('jeans', 'pants', 'slacks', 'trousers', 'pant'),
                 'shorts' => array('shorts'),
                 'shirt' => array('shirt', 'long sleeve', 'sweatshirt'),
                 'shoes' => array('shoes', 'sneaker', 'sneakers', 'heels', 'boots', 'sandals', 'clogs'),
                 'jacket' => array('coat', 'jacket', 'jackets', 'wind breaker')
             );
             
-
             $result['type'] = 'unknown';
             
             foreach ( $types as $type => $words ) {
                 foreach($words as $word) {
-                    if ( stripos($result['name'], $word) !== false || stripos($result['description'], $word) !== false ) {
+                    if ( strpos(strtolower($result['name']), $word) !== false || strpos(strtolower($result['description']), $word) !== false ) {
                         $result['type'] = $type;
                         return $result;
                     }

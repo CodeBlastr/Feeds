@@ -138,15 +138,16 @@ class Amazon extends DataSource {
         $query['private_key'] =  $key;
 		
 		$this->httpRequest['uri']['query'] = $query;
-	
+		
 		$canonicalized_query = array();
 		foreach ( $query as $param => $value ) {
 			$param = str_replace("%7E", "~", rawurlencode($param));
 			$value = str_replace("%7E", "~", rawurlencode($value));
 			$canonicalized_query[] = $param . "=" . $value;
 		}
+		
 		$string_to_sign = $this->httpRequest['method'] . "\n" . $this->httpRequest['uri']['host'] . "\n" . $this->httpRequest['uri']['path'] . "\n" . implode("&", $canonicalized_query);
-	
+		
 		// calculate HMAC with SHA256 and base64-encoding
 		$signature = base64_encode(hash_hmac("sha256", $string_to_sign, $this->private_key, True));
 		

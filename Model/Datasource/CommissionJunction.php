@@ -2,7 +2,7 @@
 App::uses('HttpSocket', 'Network/Http');
 
 class CommissionJunction extends DataSource {
-
+	
 /**
  * An optional description of your datasource
  */
