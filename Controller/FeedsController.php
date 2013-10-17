@@ -46,7 +46,7 @@ class _FeedsController extends FeedsAppController {
                 }
                 
                 
-                if (in_array('Ratings', CakePlugin::loaded()) && !empty($products)) {
+                if (CakePlugin::loaded('Ratings') && !empty($products)) {
                     foreach($products as $k => $item) {
                           $products[$k]['Ratings'] = $this->_getProductRating($item['Rating_id']);
                     }
@@ -114,7 +114,7 @@ class _FeedsController extends FeedsAppController {
             $results = array_merge($results, $this->$Model->find('first'));
         }
         
-        if (in_array('Ratings', CakePlugin::loaded()) && !empty($results)) {
+        if (CakePlugin::loaded('Ratings') && !empty($results)) {
                 foreach($results as $k => $item) {
                       $results[$k]['Ratings'] = $this->_getProductRating($item['Rating_id']);
                 }
@@ -143,7 +143,7 @@ class _FeedsController extends FeedsAppController {
         }
     
         //Adds Rateable Helpers.
-        if (in_array('Ratings', CakePlugin::loaded())) {
+        if (CakePlugin::loaded('Ratings')) {
             $this->helpers[] = 'Ratings.Rating';
             $this->uses[] = 'Ratings.Rating';
         }

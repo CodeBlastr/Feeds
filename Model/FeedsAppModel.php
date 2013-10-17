@@ -35,7 +35,7 @@ class FeedsAppModel extends AppModel {
 	public function __construct($id = false, $table = null, $ds = null) {
 		
 		//Adds Rateable Behavior.
-		if (in_array('Ratings', CakePlugin::loaded())) {
+		if (CakePlugin::loaded('Ratings')) {
 			$this->actsAs[] = 'Ratings.Ratable';
 		}
 		
