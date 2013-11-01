@@ -1,6 +1,6 @@
 <?php
 
-class _FeedAmazon extends FeedsAppModel {
+class AppFeedAmazon extends FeedsAppModel {
 	
 	public $useDbConfig = 'amazon';
     
@@ -211,5 +211,5 @@ class _FeedAmazon extends FeedsAppModel {
 }
 
 if (!isset($refuseInit)) {
-    class FeedAmazon extends _FeedAmazon {}
+    class FeedAmazon extends AppFeedAmazon {}
 }

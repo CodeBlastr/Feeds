@@ -1,6 +1,6 @@
 <?php
 
-class _FeedsController extends FeedsAppController {
+class AppFeedsController extends FeedsAppController {
     
     
     //Array of search categories
@@ -262,5 +262,5 @@ class _FeedsController extends FeedsAppController {
 }
 
 if (!isset($refuseInit)) {
-    class FeedsController extends _FeedsController {}
+    class FeedsController extends AppFeedsController {}
 }

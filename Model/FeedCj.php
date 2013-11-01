@@ -1,6 +1,6 @@
 <?php
 
-class _FeedCj extends FeedsAppModel {
+class AppFeedCj extends FeedsAppModel {
 	
 	public $useDbConfig = 'commissionjunction';
 	
@@ -253,5 +253,5 @@ class _FeedCj extends FeedsAppModel {
 }
 
 if (!isset($refuseInit)) {
-    class FeedCj extends _FeedCj {}
+    class FeedCj extends AppFeedCj {}
 }
